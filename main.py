@@ -8,6 +8,12 @@ from typing import Optional, Dict, Any
 from dataclasses import dataclass, asdict
 from datetime import datetime
 
+# Fix Windows console encoding
+if sys.platform == 'win32':
+    import io
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent))
 
@@ -92,8 +98,7 @@ class BLUEPRINTPipeline:
 
         # Check API keys
         required_keys = {
-            "GOOGLE_API_KEY": "Gemini (FREE tier)",
-            "OPENROUTER_API_KEY": "OpenRouter for Claude",
+            "OPENROUTER_API_KEY": "Claude 3.5/3.7 Sonnet via OpenRouter",
             "COHERE_API_KEY": "Cohere for embeddings",
             "PINECONE_API_KEY": "Pinecone vector DB",
         }
@@ -340,6 +345,33 @@ class BLUEPRINTPipeline:
                 self._save_checkpoint(checkpoint_file, stage=2)
 
             # ================================================================
+            # FIX #4: VALIDATE RPG BEFORE STAGE 3 (Prevent wasting tokens)
+            # ================================================================
+
+            logger.info("")
+            logger.info("VALIDATING RPG STRUCTURE")
+            logger.info("-" * 80)
+
+            is_valid, validation_errors = self._validate_rpg_structure(self.rpg)
+
+            if not is_valid:
+                logger.error("")
+                logger.error("=" * 80)
+                logger.error("RPG VALIDATION FAILED - CANNOT PROCEED TO STAGE 3")
+                logger.error("=" * 80)
+                logger.error("")
+                logger.error("The following issues were found:")
+                for error in validation_errors:
+                    logger.error(f"  {error}")
+                logger.error("")
+                logger.error("This would have wasted tokens generating code that can't be saved!")
+                logger.error("Fix these issues in Stage 2 before proceeding.")
+                logger.error("=" * 80)
+                return False
+
+            logger.info("[OK] RPG validation passed - proceeding to Stage 3")
+
+            # ================================================================
             # STAGE 3: CODE GENERATION (TDD)
             # ================================================================
 
@@ -400,6 +432,91 @@ class BLUEPRINTPipeline:
             error_msg = str(e).encode('ascii', errors='replace').decode('ascii')
             logger.error("Pipeline failed", error=error_msg)
             return False
+
+    def _validate_rpg_structure(self, rpg: RepositoryPlanningGraph) -> tuple[bool, list[str]]:
+        """
+        FIX #4: Validate RPG structure before Stage 3
+
+        Prevents wasting tokens on broken structures.
+
+        Returns:
+            (is_valid, list_of_errors)
+        """
+        errors = []
+
+        logger.info("Validating RPG structure before Stage 3...")
+
+        # Get all nodes by type
+        leaf_nodes = [
+            (n, d) for n, d in rpg.graph.nodes(data=True)
+            if d.get("type") == "leaf"
+        ]
+        intermediate_nodes = [
+            (n, d) for n, d in rpg.graph.nodes(data=True)
+            if d.get("type") == "intermediate"
+        ]
+        root_nodes = [
+            (n, d) for n, d in rpg.graph.nodes(data=True)
+            if d.get("type") == "root"
+        ]
+
+        # Check 1: RPG has required node types
+        if len(leaf_nodes) == 0:
+            errors.append("No leaf nodes found in RPG - nothing to generate")
+
+        if len(root_nodes) == 0:
+            errors.append("No root nodes found in RPG - no folder structure")
+
+        # Check 2: ALL leaf nodes must have parent_file
+        leaves_without_file = [
+            (n, d.get("name", n[:8]))
+            for n, d in leaf_nodes
+            if not d.get("parent_file") or not d.get("parent_file").strip()
+        ]
+
+        if leaves_without_file:
+            errors.append(
+                f"{len(leaves_without_file)}/{len(leaf_nodes)} leaf nodes missing parent_file "
+                f"(files will not be written!)"
+            )
+            # Show first 5
+            for node_id, name in leaves_without_file[:5]:
+                errors.append(f"  - {name} (no parent_file)")
+
+        # Check 3: ALL intermediate nodes should have file_path
+        intermediates_without_path = [
+            (n, d.get("name", n[:8]))
+            for n, d in intermediate_nodes
+            if not d.get("file_path") or not d.get("file_path").strip()
+        ]
+
+        if intermediates_without_path:
+            errors.append(
+                f"{len(intermediates_without_path)}/{len(intermediate_nodes)} "
+                f"intermediate nodes missing file_path"
+            )
+
+        # Check 4: RPG has at least some edges
+        if rpg.graph.number_of_edges() == 0:
+            errors.append("RPG has no edges - structure is disconnected")
+
+        # Validation results
+        is_valid = len(errors) == 0
+
+        if is_valid:
+            logger.info(
+                "[PASS] RPG validation passed",
+                leaves=len(leaf_nodes),
+                intermediates=len(intermediate_nodes),
+                roots=len(root_nodes),
+                edges=rpg.graph.number_of_edges()
+            )
+        else:
+            logger.error("[FAIL] RPG validation failed", error_count=len(errors))
+            for error in errors:
+                logger.error(f"  - {error}")
+
+        return is_valid, errors
 
     def _save_checkpoint(self, checkpoint_file: str, stage: int):
         """Save pipeline checkpoint"""

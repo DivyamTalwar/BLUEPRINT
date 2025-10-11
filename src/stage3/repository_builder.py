@@ -69,24 +69,36 @@ class RepositoryBuilder:
         # Group code by file
         files_code = {}  # file_path → list of code snippets
 
+        self.logger.log("debug", f"Processing {len(generated_code)} nodes for file writing")
+
         for node_id, code_data in generated_code.items():
             if node_id not in rpg.graph:
+                self.logger.log("warning", f"Node {node_id} not in RPG graph - skipping")
                 continue
 
             node_data = rpg.graph.nodes[node_id]
             file_path = node_data.get("file_path") or node_data.get("parent_file")
+            node_name = node_data.get("name", node_id[:8])
 
             if not file_path:
+                self.logger.log("warning", f"No file_path for node {node_name} - skipping")
                 continue
 
             implementation = code_data.get("implementation", "")
+
+            if not implementation:
+                self.logger.log("warning", f"Empty implementation for {node_name} in {file_path}")
+                continue
 
             if file_path not in files_code:
                 files_code[file_path] = []
 
             files_code[file_path].append(implementation)
+            self.logger.log("debug", f"Added code for {node_name} to {file_path}")
 
         # Write each file
+        self.logger.log("info", f"Writing {len(files_code)} implementation files...")
+
         for file_path, code_snippets in files_code.items():
             full_path = self.output_dir / file_path
 
@@ -101,7 +113,7 @@ class RepositoryBuilder:
 
             # Write file
             full_path.write_text(file_content, encoding='utf-8')
-            self.logger.log("debug", f"Wrote file: {file_path}", lines=len(file_content.split('\n')))
+            self.logger.log("info", f"Wrote file: {file_path}", lines=len(file_content.split('\n')))
 
     def _extract_imports(self, code_snippets: List[str]) -> List[str]:
         """Extract all import statements from code snippets."""
@@ -182,6 +194,8 @@ class RepositoryBuilder:
         # Group tests by source file
         tests_by_file = {}  # file_path → list of test code
 
+        self.logger.log("debug", f"Processing {len(generated_code)} nodes for test writing")
+
         for node_id, code_data in generated_code.items():
             if node_id not in rpg.graph:
                 continue
@@ -189,16 +203,25 @@ class RepositoryBuilder:
             node_data = rpg.graph.nodes[node_id]
             file_path = node_data.get("file_path") or node_data.get("parent_file")
             test_code = code_data.get("test_code", "")
+            node_name = node_data.get("name", node_id[:8])
 
-            if not file_path or not test_code:
+            if not file_path:
+                self.logger.log("warning", f"No file_path for test of {node_name}")
+                continue
+
+            if not test_code:
+                self.logger.log("warning", f"No test_code for {node_name}")
                 continue
 
             if file_path not in tests_by_file:
                 tests_by_file[file_path] = []
 
             tests_by_file[file_path].append(test_code)
+            self.logger.log("debug", f"Added test for {node_name}")
 
         # Write test files
+        self.logger.log("info", f"Writing {len(tests_by_file)} test files...")
+
         for file_path, test_snippets in tests_by_file.items():
             # Convert src/module/file.py → tests/test_module_file.py
             test_filename = self._get_test_filename(file_path)
@@ -219,7 +242,7 @@ class RepositoryBuilder:
                 test_content += clean_code + '\n\n'
 
             test_path.write_text(test_content, encoding='utf-8')
-            self.logger.log("debug", f"Wrote test file: {test_filename}")
+            self.logger.log("info", f"Wrote test file: {test_filename}", lines=len(test_content.split('\n')))
 
     def _get_test_filename(self, source_file: str) -> str:
         """Convert source file path to test filename."""
