@@ -1,0 +1,52 @@
+cost:
+  stop_threshold: 100.0
+  track_costs: true
+  warn_threshold: 50.0
+docker:
+  base_image: python:3.11-slim
+  cpu_limit: 1.0
+  memory_limit: 1g
+  timeout: 300
+feature_tree:
+  batch_size: 96
+  features_per_subdomain: 25
+  total_features: 5000
+llm:
+  default_temperature: 0.7
+  max_tokens: 4000
+  retry_attempts: 3
+  retry_delay: 2
+logging:
+  format: json
+  level: INFO
+  output_file: logs/BLUEPRINT.log
+performance:
+  cache_embeddings: true
+  cache_llm_responses: false
+  parallel_requests: 5
+stage1:
+  exploit_ratio_early: 0.7
+  exploit_ratio_late: 0.3
+  exploit_ratio_mid: 0.5
+  iterations: 30
+  save_checkpoints: true
+  target_features: null
+  top_k: 10
+stage2:
+  create_base_classes: true
+  signature_batch_size: 5
+  validate_before_stage3: true
+stage3:
+  checkpoint_interval: 10
+  max_debug_attempts: 8
+  test_timeout: 60
+  skip_docker: false  # Set to true to skip Docker test execution
+  save_unvalidated: true  # Save code even if tests can't run
+  static_validation: true  # Use static analysis when Docker unavailable
+  incremental_save: true  # Save code files immediately after generation
+  enable_resume: true  # Allow resuming from checkpoints
+vector_db:
+  dimension: 1024
+  environment: us-east-1
+  index_name: BLUEPRINT-features
+  metric: cosine

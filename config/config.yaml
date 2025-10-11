@@ -1,0 +1,130 @@
+# BLUEPRINT Configuration File
+
+# LLM Configuration
+llm:
+  default_temperature: 0.7
+  max_tokens: 4000
+  retry_attempts: 3
+  retry_delay: 2
+
+# API Configuration
+api:
+  openai:
+    model: "gpt-4o"
+    temperature: 0.7
+    max_tokens: 4000
+
+  gemini:
+    model: "gemini-2.0-flash-exp"
+    temperature: 0.7
+    max_tokens: 4000
+
+  claude:
+    model: "claude-sonnet-4-20250514"
+    temperature: 0.7
+    max_tokens: 4000
+
+  # LLM Router settings
+  router:
+    random_distribution: true
+    fallback_enabled: true
+    retry_attempts: 3
+    timeout: 60
+
+# Stage 1 Configuration - Proposal-level Construction
+stage1:
+  iterations: 30
+  top_k_exploit: 10
+  top_k_explore: 10
+  exploit_explore_ratio:
+    early: [0.7, 0.3]    # iterations 1-10
+    mid: [0.5, 0.5]      # iterations 11-20
+    late: [0.3, 0.7]     # iterations 21-30
+
+  feature_selection:
+    diversity_threshold: 0.95  # similarity threshold for deduplication
+    min_quality_score: 0.6
+    adaptive_strategy: true
+
+# Stage 2 Configuration - Implementation-level Construction
+stage2:
+  create_base_classes: true
+  min_base_class_instances: 3
+  max_file_size_loc: 500
+
+  file_structure:
+    follow_conventions: true
+    pythonic: true
+
+  data_flow:
+    enforce_dag: true
+    validate_types: true
+
+# Stage 3 Configuration - Code Generation
+stage3:
+  max_debug_attempts: 8
+  test_rounds: 5
+
+  tdd:
+    test_first: true
+    coverage_target: 0.8
+    integration_tests: true
+
+# Docker Configuration (also available under stage3.docker for backward compatibility)
+docker:
+  timeout: 300
+  memory_limit: "1g"
+  cpu_limit: 1
+  base_image: "python:3.11-slim"
+
+# Vector Database Configuration
+vector_db:
+  provider: "pinecone"
+  dimension: 1536
+  metric: "cosine"
+  index_name: "blueprint-features"
+
+  embedding:
+    model: "text-embedding-3-large"
+    batch_size: 100
+
+# Feature Tree Configuration
+feature_tree:
+  total_features: 50000
+  taxonomy_levels: 4
+  top_level_domains: 20
+
+  generation:
+    batch_size: 50
+    diversity_sampling: true
+
+# Logging Configuration
+logging:
+  level: "INFO"
+  format: "json"
+  file: "logs/blueprint.log"
+  console: true
+
+  levels:
+    console: "INFO"
+    file: "DEBUG"
+
+# Performance Configuration
+performance:
+  cache_enabled: true
+  cache_ttl: 3600
+  batch_operations: true
+  parallel_workers: 4
+
+# Cost Tracking
+cost:
+  budget_per_repo: 50
+  alert_threshold: 0.8
+  track_tokens: true
+
+# Output Configuration
+output:
+  directory: "output"
+  save_rpg: true
+  save_intermediate: true
+  visualization: true
