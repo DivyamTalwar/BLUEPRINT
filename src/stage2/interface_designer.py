@@ -67,12 +67,45 @@ class InterfaceDesigner:
                 self.logger.log("debug", f"Designed signature for {rpg.graph.nodes[node_id].get('name')}",
                               signature=sig.get("signature"))
 
+    def _extract_base_class_signatures(self, rpg: RepositoryPlanningGraph, node_id: str, node_data: Dict):
+        """
+        Extract signatures from base_class_design and store them on the node.
+
+        Base classes have their design stored in `base_class_design` field,
+        which contains methods with signatures. We need to extract these
+        and store them in the standard `signature` field for Stage 3.
+        """
+        base_class_design = node_data.get("base_class_design")
+        if not base_class_design:
+            self.logger.log("warning", f"Base class {node_data.get('name')} has no design")
+            return
+
+        methods = base_class_design.get("methods", [])
+        if not methods:
+            self.logger.log("warning", f"Base class {node_data.get('name')} has no methods")
+            return
+
+        # For base classes with multiple methods, we'll use the first method's signature
+        # or create a composite signature
+        primary_method = methods[0] if methods else None
+        if primary_method:
+            rpg.graph.nodes[node_id]["signature"] = primary_method.get("signature", "")
+            rpg.graph.nodes[node_id]["docstring"] = base_class_design.get("docstring", "")
+            rpg.graph.nodes[node_id]["imports"] = base_class_design.get("imports", [])
+
+            # Store all methods for reference
+            rpg.graph.nodes[node_id]["methods"] = methods
+
+            self.logger.log("debug", f"Extracted signature for base class {node_data.get('name')}",
+                          signature=primary_method.get("signature"))
+
     def _extract_node_context(self, rpg: RepositoryPlanningGraph, node_id: str) -> Optional[Dict]:
         node_data = rpg.graph.nodes[node_id]
 
-        # Skip base classes (they're already designed)
+        # Handle base classes - extract signatures from base_class_design
         if node_data.get("is_base_class"):
-            return None
+            self._extract_base_class_signatures(rpg, node_id, node_data)
+            return None  # Skip from batch processing since already handled
 
         context = {
             "node_id": node_id,

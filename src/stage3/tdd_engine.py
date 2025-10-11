@@ -183,6 +183,7 @@ Generate the test code:"""
         name = node_data.get("name")
         functionality = node_data.get("functionality", "")
         code_type = node_data.get("code_type")
+        is_base_class = node_data.get("is_base_class", False)
 
         # Get base class if inherits
         inherits_from = node_data.get("inherits_from")
@@ -190,7 +191,34 @@ Generate the test code:"""
         if inherits_from:
             base_class_code = self._get_base_class_code(rpg, inherits_from)
 
-        prompt = f"""Implement this function/method to pass the test.
+        # FIX #2: For base classes, explicitly list ALL required methods
+        base_class_methods_requirement = ""
+        if is_base_class:
+            base_class_design = node_data.get("base_class_design", {})
+            methods = base_class_design.get("methods", [])
+
+            if methods:
+                method_list = "\n".join([
+                    f"  - {m.get('signature', 'unknown')}: {m.get('docstring', '')[:50]}"
+                    for m in methods
+                ])
+                base_class_methods_requirement = f"""
+CRITICAL - BASE CLASS REQUIREMENTS:
+This is a BASE CLASS. You MUST implement ALL {len(methods)} methods listed below.
+Do NOT skip any methods. Each method must have a complete, production-ready implementation.
+
+Required methods:
+{method_list}
+
+IMPORTANT:
+- Implement EVERY method listed above
+- No stub implementations (no 'pass' or 'raise NotImplementedError')
+- Each method should have full, working code
+- Minimum 5-10 lines per method
+- Total class should be 100+ lines
+"""
+
+        prompt = f"""Implement this {"BASE CLASS" if is_base_class else "function/method"} to pass the test.
 
 Signature:
 {signature}
@@ -206,25 +234,63 @@ Test code:
 
 {"Base class to inherit from:\n" + base_class_code if base_class_code else ""}
 
+{base_class_methods_requirement}
+
 Requirements:
-1. Implement the function to pass the test
+1. Implement {"ALL methods in the base class" if is_base_class else "the function"} to pass the test
 2. Handle edge cases properly
 3. Include error handling
 4. Use type hints
 5. Follow Python best practices
+{"6. This is a BASE CLASS - implement EVERY method completely (no stubs!)" if is_base_class else ""}
 
 Output ONLY the implementation code, no explanations.
 
-Generate the implementation:"""
+Generate the {"complete base class with ALL methods" if is_base_class else "implementation"}:"""
 
         try:
+            # FIX #2: Increase token limit for base classes (need 100+ lines)
+            token_limit = 6000 if is_base_class else 3000
+
             response = self.llm.generate(
                 prompt=prompt,
                 temperature=0.4,
-                max_tokens=3000
+                max_tokens=token_limit,
+                complexity="complex" if is_base_class else "auto"  # Use Claude 3.7 for base classes
             )
 
             impl_code = self._extract_code_block(response.content)
+
+            # FIX #5: Validate code completeness
+            is_complete, completeness_error = self._validate_code_completeness(
+                impl_code, node_data
+            )
+
+            if not is_complete:
+                self.logger.warning(f"Code completeness check failed for {name}: {completeness_error}")
+                # Try one more time with stronger prompt
+                retry_prompt = f"""{prompt}
+
+PREVIOUS ATTEMPT WAS TOO SHORT: {completeness_error}
+
+Generate a COMPLETE, PRODUCTION-READY implementation with:
+- Minimum 20 lines for regular features
+- Minimum 100 lines for base classes
+- Full implementations (no stubs, no 'pass')
+- Complete error handling
+- Comprehensive logic
+
+Generate the COMPLETE implementation now:"""
+
+                retry_response = self.llm.generate(
+                    prompt=retry_prompt,
+                    temperature=0.4,
+                    max_tokens=token_limit,
+                    complexity="complex" if is_base_class else "auto"
+                )
+
+                impl_code = self._extract_code_block(retry_response.content)
+                self.logger.info(f"Retry generated {len(impl_code.split('\\n'))} lines for {name}")
 
             self.logger.debug(f"Implementation generated for {name}", lines=len(impl_code.split('\n')))
             return impl_code
@@ -244,6 +310,9 @@ Generate the implementation:"""
         current_impl = initial_implementation
         attempts = 0
 
+        # FIX #3: Track all previous attempts to prevent repeating mistakes
+        attempt_history = []
+
         while attempts < self.max_fix_attempts:
             attempts += 1
 
@@ -261,16 +330,24 @@ Generate the implementation:"""
             # Test failed - analyze and fix
             self.logger.warning(f"[FAIL] Test failed on attempt {attempts}")
 
+            # Record this failed attempt
+            attempt_history.append({
+                "attempt_num": attempts,
+                "error": test_output[:500],  # Keep first 500 chars
+                "implementation_snippet": current_impl[:300]  # First 300 chars to identify approach
+            })
+
             if attempts >= self.max_fix_attempts:
                 self.logger.error("Max fix attempts reached")
                 return False, current_impl, test_output, attempts
 
-            # Generate fix
+            # Generate fix with history of previous attempts
             fixed_impl = self._generate_fix(
                 current_implementation=current_impl,
                 test_code=test_code,
                 error_output=test_output,
-                node_data=node_data
+                node_data=node_data,
+                attempt_history=attempt_history  # Pass history
             )
 
             if not fixed_impl or fixed_impl == current_impl:
@@ -312,11 +389,25 @@ Generate the implementation:"""
             return False, str(e)
 
     def _generate_fix(self, current_implementation: str, test_code: str,
-                     error_output: str, node_data: Dict) -> Optional[str]:
+                     error_output: str, node_data: Dict,
+                     attempt_history: list = None) -> Optional[str]:
         """
         Analyze error and generate fixed implementation.
+
+        FIX #3: Now includes attempt history to prevent repeating mistakes.
         """
         name = node_data.get("name")
+
+        # FIX #3: Format previous attempt history
+        history_text = ""
+        if attempt_history and len(attempt_history) > 0:
+            history_text = "\nPREVIOUS FAILED ATTEMPTS (DO NOT REPEAT THESE APPROACHES):\n"
+            for attempt in attempt_history:
+                history_text += f"\nAttempt {attempt['attempt_num']}:\n"
+                history_text += f"Error: {attempt['error'][:200]}...\n"
+                history_text += f"Approach used: {attempt['implementation_snippet'][:150]}...\n"
+
+            history_text += f"\nYou have tried {len(attempt_history)} approach(es) already. Try a DIFFERENT approach!\n"
 
         prompt = f"""This code failed its test. Analyze the error and provide a fix.
 
@@ -329,8 +420,14 @@ Test code:
 Error output:
 {error_output[:1000]}
 
-Analyze the error and provide corrected implementation.
-Output ONLY the fixed code, no explanations.
+{history_text}
+
+CRITICAL INSTRUCTIONS:
+1. Analyze why the current implementation failed
+2. {"Try a COMPLETELY DIFFERENT approach from previous attempts" if attempt_history else "Provide a working fix"}
+3. DO NOT repeat the same mistakes
+4. Ensure the fix actually addresses the error
+5. Output ONLY the fixed code, no explanations
 
 Fixed implementation:"""
 
@@ -504,3 +601,91 @@ Fixed implementation:"""
             "status": status,
             "errors": errors
         }
+
+    def _validate_code_completeness(self, code: str, node_data: Dict[str, Any]) -> Tuple[bool, Optional[str]]:
+        """
+        FIX #5: Validate that generated code is complete and not just stubs.
+
+        Returns:
+            (is_complete, error_message)
+        """
+        import ast
+
+        is_base_class = node_data.get("is_base_class", False)
+        name = node_data.get("name", "unknown")
+
+        lines = [line for line in code.split('\n') if line.strip() and not line.strip().startswith('#')]
+        line_count = len(lines)
+
+        # Minimum line requirements
+        min_lines_base_class = 100
+        min_lines_feature = 20
+
+        if is_base_class and line_count < min_lines_base_class:
+            return False, f"Base class only has {line_count} lines (minimum {min_lines_base_class} required)"
+
+        if not is_base_class and line_count < min_lines_feature:
+            return False, f"Implementation only has {line_count} lines (minimum {min_lines_feature} required)"
+
+        # Check for stub implementations
+        try:
+            tree = ast.parse(code)
+
+            # Count function/method definitions
+            function_count = 0
+            stub_count = 0
+
+            for node in ast.walk(tree):
+                if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                    function_count += 1
+
+                    # Check if function is a stub (only has pass, raise NotImplementedError, or return None)
+                    body = node.body
+
+                    # Skip docstrings
+                    if body and isinstance(body[0], ast.Expr) and isinstance(body[0].value, ast.Constant):
+                        body = body[1:]
+
+                    if len(body) == 1:
+                        stmt = body[0]
+
+                        # Check for stub patterns
+                        is_stub = False
+
+                        # Pattern 1: pass
+                        if isinstance(stmt, ast.Pass):
+                            is_stub = True
+
+                        # Pattern 2: raise NotImplementedError
+                        elif isinstance(stmt, ast.Raise):
+                            if isinstance(stmt.exc, ast.Name) and stmt.exc.id == "NotImplementedError":
+                                is_stub = True
+
+                        # Pattern 3: return None
+                        elif isinstance(stmt, ast.Return):
+                            if stmt.value is None or (isinstance(stmt.value, ast.Constant) and stmt.value.value is None):
+                                is_stub = True
+
+                        if is_stub:
+                            stub_count += 1
+
+            # For base classes, check that most methods are implemented
+            if is_base_class and function_count > 0:
+                stub_ratio = stub_count / function_count
+
+                if stub_ratio > 0.3:  # More than 30% are stubs
+                    return False, f"{stub_count}/{function_count} methods are stubs (only pass/NotImplementedError)"
+
+                if function_count < 5:  # Base classes should have at least 5 methods
+                    return False, f"Base class only has {function_count} methods (expected 5+)"
+
+            # For regular features, should not have stubs at all
+            if not is_base_class and stub_count > 0:
+                return False, f"{stub_count} stub functions found (need complete implementations)"
+
+        except Exception as e:
+            # If AST parsing fails, that's already caught by static validation
+            pass
+
+        # Passed all checks
+        return True, None

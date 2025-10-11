@@ -5,7 +5,6 @@ from dataclasses import dataclass
 import json
 
 from openai import OpenAI
-import google.generativeai as genai
 
 from src.utils.logger import get_logger
 
@@ -26,51 +25,39 @@ class LLMResponse:
 
 class FinalLLMRouter:
     """
-    Production LLM Router
+    Production LLM Router - Claude Only
 
-    Primary: Gemini 2.0 Flash (FREE)
-    Fallback: Claude Sonnet 3.5 via OpenRouter
+    Strategy:
+    - Claude 3.5 Sonnet: Simple tasks (feature selection, basic queries)
+    - Claude 3.7 Sonnet: Complex tasks (code generation, architecture design)
+
+    NO GEMINI - It's safety filters are too aggressive and unusable
     """
 
     def __init__(self, config: Dict[str, Any]):
-        """Initialize with available API keys"""
+        """Initialize with OpenRouter API key"""
         self.config = config
         self.total_cost = 0.0
         self.api_calls = 0
 
         # Check required keys
-        gemini_key = os.getenv("GOOGLE_API_KEY")
         openrouter_key = os.getenv("OPENROUTER_API_KEY")
 
-        if not gemini_key and not openrouter_key:
-            raise ValueError("Need GOOGLE_API_KEY or OPENROUTER_API_KEY in .env")
+        if not openrouter_key:
+            raise ValueError("Need OPENROUTER_API_KEY in .env")
 
-        # Initialize Gemini (FREE!)
-        if gemini_key:
-            genai.configure(api_key=gemini_key)
-            self.gemini_model = "gemini-2.5-flash"
-            self.has_gemini = True
-            logger.info("[OK] Gemini initialized: %s (FREE)", self.gemini_model)
-        else:
-            self.has_gemini = False
-            logger.warning("Gemini not available")
+        # Initialize OpenRouter for Claude
+        self.openrouter = OpenAI(
+            api_key=openrouter_key,
+            base_url="https://openrouter.ai/api/v1"
+        )
 
-        # Initialize OpenRouter for Claude Sonnet 3.5
-        if openrouter_key:
-            self.openrouter = OpenAI(
-                api_key=openrouter_key,
-                base_url="https://openrouter.ai/api/v1"
-            )
-            # Use Claude Sonnet 3.5 via OpenRouter
-            self.claude_model = "anthropic/claude-3.5-sonnet"
-            self.has_openrouter = True
-            logger.info("[OK] OpenRouter initialized: %s", self.claude_model)
-        else:
-            self.has_openrouter = False
-            logger.warning("OpenRouter not available")
+        # Model selection
+        self.claude_simple = "anthropic/claude-3.5-sonnet"  # Simple tasks
+        self.claude_complex = "anthropic/claude-3.7-sonnet"  # Complex tasks
 
-        if not self.has_gemini and not self.has_openrouter:
-            raise ValueError("No LLM providers available!")
+        logger.info("[OK] OpenRouter initialized: %s (simple), %s (complex)",
+                   self.claude_simple, self.claude_complex)
 
     def generate(
         self,
@@ -78,156 +65,112 @@ class FinalLLMRouter:
         temperature: float = 0.7,
         max_tokens: int = 4000,
         json_mode: bool = False,
-        prefer_claude: bool = False,
+        prefer_claude: bool = False,  # Deprecated but kept for compatibility
+        complexity: str = "auto",  # "simple", "complex", or "auto"
     ) -> LLMResponse:
         """
-        Generate response
+        Generate response using Claude
 
         Args:
             prompt: Input prompt
             temperature: Sampling temperature
             max_tokens: Max tokens
             json_mode: Force JSON output
-            prefer_claude: Use Claude instead of Gemini (for complex reasoning)
+            prefer_claude: Deprecated (always uses Claude now)
+            complexity: Task complexity ("simple", "complex", or "auto")
 
         Returns:
             LLM response
         """
-        # Strategy: Use Gemini first (FREE), Claude for complex tasks
-        if self.has_gemini and not prefer_claude:
-            try:
-                return self._call_gemini(prompt, temperature, max_tokens, json_mode)
-            except Exception as e:
-                logger.warning("Gemini failed: %s, trying Claude", str(e))
-                if not self.has_openrouter:
-                    raise
+        # Determine which model to use based on complexity
+        if complexity == "auto":
+            complexity = self._detect_complexity(prompt, max_tokens)
 
-        # Use Claude for complex reasoning or as fallback
-        if self.has_openrouter:
-            return self._call_claude(prompt, temperature, max_tokens, json_mode)
+        if complexity == "complex":
+            model = self.claude_complex
+            logger.debug("Using Claude 3.7 Sonnet (complex task)")
+        else:
+            model = self.claude_simple
+            logger.debug("Using Claude 3.5 Sonnet (simple task)")
 
-        # Last resort: Gemini
-        if self.has_gemini:
-            return self._call_gemini(prompt, temperature, max_tokens, json_mode)
+        return self._call_claude(model, prompt, temperature, max_tokens, json_mode)
 
-        raise ValueError("No LLM providers available")
-
-    def _call_gemini(
-        self,
-        prompt: str,
-        temperature: float,
-        max_tokens: int,
-        json_mode: bool,
-    ) -> LLMResponse:
-        """Call Gemini (FREE) with safety filter handling"""
-        start_time = time.time()
-
-        try:
-            model = genai.GenerativeModel(
-                self.gemini_model,
-                safety_settings={
-                    "HARASSMENT": "BLOCK_NONE",
-                    "HATE_SPEECH": "BLOCK_NONE",
-                    "SEXUALLY_EXPLICIT": "BLOCK_NONE",
-                    "DANGEROUS_CONTENT": "BLOCK_NONE",
-                }
-            )
-
-            generation_config = {
-                "temperature": temperature,
-                "max_output_tokens": max_tokens,
-            }
-
-            if json_mode:
-                generation_config["response_mime_type"] = "application/json"
-
-            response = model.generate_content(prompt, generation_config=generation_config)
-
-            # Check for safety filter blocking (finish_reason=2)
-            if not response.candidates:
-                raise Exception("Gemini safety filter blocked response (no candidates)")
-
-            finish_reason = response.candidates[0].finish_reason
-            if finish_reason == 2:  # SAFETY block
-                # Try sanitizing prompt and retry once
-                sanitized_prompt = self._sanitize_prompt_for_gemini(prompt)
-                if sanitized_prompt != prompt:
-                    logger.warning("Gemini safety filter triggered, retrying with sanitized prompt")
-                    response = model.generate_content(sanitized_prompt, generation_config=generation_config)
-
-                    # Still blocked? Raise to trigger Claude fallback
-                    if not response.candidates or response.candidates[0].finish_reason == 2:
-                        raise Exception("Gemini safety filter blocked after retry")
-                else:
-                    raise Exception("Gemini safety filter blocked response")
-
-            latency = time.time() - start_time
-            tokens = len(response.text.split()) * 1.3  # Estimate
-            cost = 0.0  # FREE!
-
-            self.api_calls += 1
-
-            logger.debug("Gemini: tokens~%d, cost=$0 (FREE), latency=%.2fs", tokens, latency)
-
-            return LLMResponse(
-                content=response.text,
-                provider="gemini",
-                model=self.gemini_model,
-                tokens_used=int(tokens),
-                cost=cost,
-                latency=latency,
-                metadata={"finish_reason": "stop"},
-            )
-
-        except Exception as e:
-            logger.error("Gemini error: %s", str(e))
-            raise
-
-    def _sanitize_prompt_for_gemini(self, prompt: str) -> str:
+    def _detect_complexity(self, prompt: str, max_tokens: int) -> str:
         """
-        Sanitize prompt to reduce Gemini safety filter triggers.
+        Detect task complexity based on prompt characteristics
 
-        Common triggers: command, shell, execute, exploit, attack, inject, hack
+        Complex tasks:
+        - Code generation (>1000 tokens)
+        - Architecture design
+        - Large context (>2000 tokens)
+        - Multiple requirements
+
+        Simple tasks:
+        - Feature selection
+        - Simple queries
+        - Small responses (<1000 tokens)
         """
-        replacements = {
-            "command line": "CLI application",
-            "command-line": "CLI",
-            "shell": "terminal interface",
-            "execute": "run",
-            "exploit": "utilize",
-            "attack": "approach",
-            "inject": "insert",
-            "hack": "customize",
-            "kill": "terminate",
-            "destroy": "remove",
-        }
+        # Check token budget (complex tasks need more tokens)
+        if max_tokens > 2000:
+            return "complex"
 
-        sanitized = prompt
-        for old, new in replacements.items():
-            sanitized = sanitized.replace(old, new)
-            sanitized = sanitized.replace(old.upper(), new.upper())
-            sanitized = sanitized.replace(old.capitalize(), new.capitalize())
+        # Check prompt length (longer prompts = complex tasks)
+        if len(prompt) > 2000:
+            return "complex"
 
-        return sanitized
+        # Check for code generation keywords
+        code_keywords = [
+            "generate code",
+            "implement",
+            "write function",
+            "create class",
+            "build",
+            "design architecture",
+            "refactor",
+            "optimize",
+        ]
+
+        prompt_lower = prompt.lower()
+        for keyword in code_keywords:
+            if keyword in prompt_lower:
+                return "complex"
+
+        # Check for multi-step reasoning
+        multi_step_keywords = [
+            "step by step",
+            "analyze and",
+            "design and implement",
+            "plan and",
+            "multiple",
+            "several",
+        ]
+
+        for keyword in multi_step_keywords:
+            if keyword in prompt_lower:
+                return "complex"
+
+        # Default to simple
+        return "simple"
 
     def _call_claude(
         self,
+        model: str,
         prompt: str,
         temperature: float,
         max_tokens: int,
         json_mode: bool,
     ) -> LLMResponse:
-        """Call Claude Sonnet 3.5 via OpenRouter"""
+        """Call Claude via OpenRouter"""
         start_time = time.time()
 
         try:
             messages = [{"role": "user", "content": prompt}]
 
             if json_mode:
-                messages[0]["content"] = f"{prompt}\n\nRespond with valid JSON only."
+                messages[0]["content"] = f"{prompt}\n\nIMPORTANT: Respond with ONLY valid JSON. No explanations, no markdown, no code fences. Start with {{ and end with }}."
 
             response = self.openrouter.chat.completions.create(
-                model=self.claude_model,
+                model=model,
                 messages=messages,
                 temperature=temperature,
                 max_tokens=max_tokens,
@@ -236,20 +179,32 @@ class FinalLLMRouter:
             latency = time.time() - start_time
             tokens = response.usage.total_tokens if response.usage else 1000
 
-            # OpenRouter pricing for Claude Sonnet 3.5:
-            # Input: $3/1M tokens, Output: $15/1M tokens
-            # Estimate: ~$9/1M average
+            # OpenRouter pricing:
+            # Claude 3.5 Sonnet: Input $3/1M, Output $15/1M (avg ~$9/1M)
+            # Claude 3.7 Sonnet: Input $3/1M, Output $15/1M (avg ~$9/1M) - same pricing
             cost = (tokens / 1_000_000) * 9.0
 
             self.total_cost += cost
             self.api_calls += 1
 
-            logger.debug("Claude: tokens=%d, cost=$%.4f, latency=%.2fs", tokens, cost, latency)
+            model_name = "3.7" if "3.7" in model else "3.5"
+            logger.debug("Claude %s: tokens=%d, cost=$%.4f, latency=%.2fs",
+                        model_name, tokens, cost, latency)
+
+            content = response.choices[0].message.content
+
+            # Extract JSON from markdown code fences if present
+            if json_mode and "```" in content:
+                # Extract JSON from ```json or ``` code blocks
+                if "```json" in content:
+                    content = content.split("```json")[1].split("```")[0].strip()
+                elif "```" in content:
+                    content = content.split("```")[1].split("```")[0].strip()
 
             return LLMResponse(
-                content=response.choices[0].message.content,
+                content=content,
                 provider="claude",
-                model=self.claude_model,
+                model=model,
                 tokens_used=tokens,
                 cost=cost,
                 latency=latency,
@@ -267,8 +222,8 @@ class FinalLLMRouter:
             "api_calls": self.api_calls,
             "cost_per_call": round(self.total_cost / self.api_calls, 4) if self.api_calls > 0 else 0,
             "providers": {
-                "gemini": self.has_gemini,
-                "claude_via_openrouter": self.has_openrouter,
+                "claude_3.5_sonnet": True,
+                "claude_3.7_sonnet": True,
             },
             "total_tokens": 0,  # For compatibility
         }

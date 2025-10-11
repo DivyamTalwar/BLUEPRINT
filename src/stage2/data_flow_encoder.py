@@ -275,17 +275,23 @@ IMPORTANT: Return ONLY valid JSON, no additional text."""
             if cycles:
                 self.logger.log("error", "CIRCULAR DEPENDENCIES DETECTED", cycles=cycles[:5])
 
-                # Try to break cycles by removing problematic edges
-                for cycle in cycles[:3]:  # Fix first 3 cycles
-                    if len(cycle) >= 2:
-                        # Remove last edge in cycle
-                        rpg.graph.remove_edge(cycle[-1], cycle[0])
-                        self.logger.log("warning", f"Removed edge to break cycle: {cycle[-1]} -> {cycle[0]}")
+                # Try to break ALL cycles by removing problematic edges
+                max_iterations = 10
+                iteration = 0
+                while cycles and iteration < max_iterations:
+                    iteration += 1
+                    for cycle in cycles:
+                        if len(cycle) >= 2:
+                            # Remove last edge in cycle to break it
+                            if rpg.graph.has_edge(cycle[-1], cycle[0]):
+                                rpg.graph.remove_edge(cycle[-1], cycle[0])
+                                self.logger.log("warning", f"Removed edge to break cycle: {cycle[-1]} -> {cycle[0]}")
 
-                # Re-check
-                remaining_cycles = list(nx.simple_cycles(rpg.graph))
-                if remaining_cycles:
-                    self.logger.log("error", "Unable to resolve all cycles", count=len(remaining_cycles))
+                    # Re-check for remaining cycles
+                    cycles = list(nx.simple_cycles(rpg.graph))
+
+                if cycles:
+                    self.logger.log("error", "Unable to resolve all cycles after 10 iterations", count=len(cycles))
                 else:
                     self.logger.log("info", "All cycles resolved")
             else:

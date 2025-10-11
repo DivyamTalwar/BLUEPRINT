@@ -26,6 +26,9 @@ class FileStructureEncoder:
         # Step 3: Determine function vs class implementation
         self._assign_code_types(rpg)
 
+        # Step 4: FIX #1 - Ensure ALL leaf nodes have file paths (catch missed features)
+        self._ensure_all_leaves_have_file_paths(rpg)
+
         self.logger.log("info", "File structure encoding complete")
         return rpg
 
@@ -319,3 +322,123 @@ IMPORTANT: Return ONLY valid JSON, no additional text."""
             # Fallback: all functions
             return [{"feature_id": f["id"], "code_type": "function", "class_name": None}
                    for f in features]
+
+    def _ensure_all_leaves_have_file_paths(self, rpg: RepositoryPlanningGraph):
+        """
+        FIX #1: Ensure ALL leaf nodes have parent_file set.
+
+        This catches any features that weren't properly grouped into files
+        by providing comprehensive fallback logic.
+        """
+        leaf_nodes = [n for n, d in rpg.graph.nodes(data=True) if d.get("type") == NodeType.LEAF.value]
+
+        fixed_count = 0
+        missing_count = 0
+
+        for leaf_id in leaf_nodes:
+            leaf_data = rpg.graph.nodes[leaf_id]
+            parent_file = leaf_data.get("parent_file")
+
+            # If parent_file already set, skip
+            if parent_file and parent_file.strip():
+                continue
+
+            missing_count += 1
+            node_name = leaf_data.get("name", leaf_id[:8])
+
+            # Strategy 1: Search parent hierarchy for intermediate nodes with file_path
+            file_path = self._find_file_path_from_parents(rpg, leaf_id)
+
+            if file_path:
+                leaf_data["parent_file"] = file_path
+                fixed_count += 1
+                self.logger.log("debug", f"Fixed parent_file for {node_name} via hierarchy: {file_path}")
+                continue
+
+            # Strategy 2: Construct from class_name patterns
+            class_name = leaf_data.get("class_name", "").lower()
+            if class_name:
+                file_path = self._construct_file_path_from_class_name(class_name)
+                if file_path:
+                    leaf_data["parent_file"] = file_path
+                    fixed_count += 1
+                    self.logger.log("debug", f"Fixed parent_file for {node_name} via class_name: {file_path}")
+                    continue
+
+            # Strategy 3: Use domain/subdomain to place in appropriate module
+            domain = leaf_data.get("domain", "")
+            subdomain = leaf_data.get("subdomain", "")
+
+            if domain:
+                # Construct reasonable file path from domain
+                domain_slug = domain.lower().replace(" ", "_").replace("-", "_")
+                file_name = subdomain.lower().replace(" ", "_").replace("-", "_") if subdomain else "core"
+                file_path = f"src/{domain_slug}/{file_name}.py"
+                leaf_data["parent_file"] = file_path
+                fixed_count += 1
+                self.logger.log("debug", f"Fixed parent_file for {node_name} via domain: {file_path}")
+                continue
+
+            # Strategy 4: Last resort - place in src/core/
+            file_path = "src/core/features.py"
+            leaf_data["parent_file"] = file_path
+            fixed_count += 1
+            self.logger.log("warning", f"Used fallback parent_file for {node_name}: {file_path}")
+
+        if missing_count > 0:
+            self.logger.log("info", f"FIX #1 Applied: Fixed {fixed_count}/{missing_count} leaf nodes missing file paths")
+        else:
+            self.logger.log("info", "FIX #1 Check: All leaf nodes already have file paths")
+
+    def _find_file_path_from_parents(self, rpg: RepositoryPlanningGraph, leaf_id: str) -> Optional[str]:
+        """Search parent hierarchy for intermediate nodes with file_path."""
+        for pred in rpg.graph.predecessors(leaf_id):
+            pred_data = rpg.graph.nodes[pred]
+            pred_type = pred_data.get("type")
+
+            # Found intermediate node (file)
+            if pred_type == NodeType.INTERMEDIATE.value:
+                file_path = pred_data.get("file_path")
+                if file_path and file_path.strip():
+                    return file_path
+
+            # Found root node (folder) - construct file path
+            elif pred_type == NodeType.ROOT.value:
+                folder_path = pred_data.get("file_path", "src/")
+                # Create a default file in this folder
+                return f"{folder_path}core.py"
+
+        return None
+
+    def _construct_file_path_from_class_name(self, class_name: str) -> Optional[str]:
+        """Construct file path from class name patterns."""
+        class_lower = class_name.lower()
+
+        # Base classes pattern
+        if class_lower.startswith("base"):
+            # BaseService -> src/base/base_service.py
+            file_name = class_lower.replace("service", "_service") if "service" in class_lower else class_lower
+            return f"src/base/{file_name}.py"
+
+        # API/Service classes
+        if "api" in class_lower or "service" in class_lower:
+            # UserService -> src/api/user_service.py
+            return f"src/api/{class_lower}.py"
+
+        # Repository pattern
+        if "repository" in class_lower or "repo" in class_lower:
+            return f"src/repositories/{class_lower}.py"
+
+        # Model pattern
+        if "model" in class_lower:
+            return f"src/models/{class_lower}.py"
+
+        # Controller pattern
+        if "controller" in class_lower:
+            return f"src/controllers/{class_lower}.py"
+
+        # Utility/Helper pattern
+        if "util" in class_lower or "helper" in class_lower:
+            return f"src/utils/{class_lower}.py"
+
+        return None
