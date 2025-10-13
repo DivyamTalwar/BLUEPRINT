@@ -62,6 +62,8 @@ output/
 checkpoints/
 
 # Data files (may contain sensitive info)
+# Users generate their own feature_tree.json via scripts/generate_feature_tree.py
+data/
 data/private/
 data/api_keys/
 
