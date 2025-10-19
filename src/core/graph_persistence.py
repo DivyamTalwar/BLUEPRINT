@@ -12,30 +12,32 @@ logger = get_logger(__name__)
 
 
 class GraphPersistence:
-    """Handle RPG serialization and persistence"""
 
     @staticmethod
     def save_json(rpg: RepositoryPlanningGraph, filepath: str) -> bool:
-        """
-        Save RPG to JSON file
 
-        Args:
-            rpg: Repository Planning Graph
-            filepath: Output file path
+        if not rpg:
+            logger.error("Cannot save None RPG")
+            raise ValueError("RPG cannot be None")
 
-        Returns:
-            True if successful
-        """
+        if not filepath or not filepath.strip():
+            logger.error("Invalid filepath")
+            raise ValueError("Filepath cannot be empty")
+
         try:
             data = rpg.to_dict()
             success = FileOperations.write_json(filepath, data, indent=2)
 
             if success:
-                logger.info("Saved RPG to JSON: %s", filepath)
+                logger.info("Saved RPG to JSON: %s (nodes: %d, edges: %d)",
+                        filepath, rpg.graph.number_of_nodes(), rpg.graph.number_of_edges())
             return success
 
+        except (IOError, OSError) as e:
+            logger.error("File system error saving RPG", error=str(e), filepath=filepath)
+            raise IOError(f"Failed to write RPG file: {str(e)}")
         except Exception as e:
-            logger.error("Error saving RPG to JSON: %s", str(e))
+            logger.error("Error saving RPG to JSON", error=str(e), filepath=filepath)
             return False
 
     @staticmethod

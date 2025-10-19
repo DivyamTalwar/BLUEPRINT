@@ -14,23 +14,22 @@ class GraphOperations:
     def merge_nodes(
         rpg: RepositoryPlanningGraph, node1_id: str, node2_id: str, new_name: str
     ) -> Optional[str]:
-        """
-        Merge two nodes into one
 
-        Args:
-            rpg: Repository Planning Graph
-            node1_id: First node ID
-            node2_id: Second node ID
-            new_name: Name for merged node
+        if not rpg:
+            raise ValueError("RPG cannot be None")
 
-        Returns:
-            New node ID or None if failed
-        """
+        if not node1_id or not node2_id or not new_name:
+            raise ValueError("Node IDs and new name cannot be empty")
+
+        if node1_id == node2_id:
+            logger.warning("Cannot merge node with itself")
+            return None
+
         node1 = rpg.get_node(node1_id)
         node2 = rpg.get_node(node2_id)
 
         if not node1 or not node2:
-            logger.error("One or both nodes not found")
+            logger.error("One or both nodes not found", node1_id=node1_id, node2_id=node2_id)
             return None
 
         # Create merged node
