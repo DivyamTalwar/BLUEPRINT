@@ -422,15 +422,26 @@ class BLUEPRINTPipeline:
             logger.info(f"RPG nodes: {self.rpg.graph.number_of_nodes()}")
             logger.info("=" * 80)
 
-            # Save final stats
             self._save_final_report()
 
             return True
 
+        except KeyboardInterrupt:
+            logger.info("Pipeline interrupted by user")
+            print("\n\n[INTERRUPTED] Generation stopped by user")
+            return False
+        except MemoryError:
+            logger.error("Out of memory - try reducing feature count or complexity")
+            print("\n[ERROR] Out of memory! Try:")
+            print("  - Reduce target feature count in config.yaml")
+            print("  - Simplify repository description")
+            print("  - Close other applications\n")
+            return False
         except Exception as e:
-            # Safely encode error message to avoid unicode issues
             error_msg = str(e).encode('ascii', errors='replace').decode('ascii')
-            logger.error("Pipeline failed", error=error_msg)
+            logger.error("Pipeline failed", error=error_msg, exc_info=True)
+            print(f"\n[ERROR] Pipeline failed: {error_msg}")
+            print("Check logs for details\n")
             return False
 
     def _validate_rpg_structure(self, rpg: RepositoryPlanningGraph) -> tuple[bool, list[str]]:
@@ -666,14 +677,32 @@ For more info: https://github.com/blueprint/blueprint
         parser.print_help()
         sys.exit(1)
 
-    # Run pipeline
-    success = pipeline.run(
-        user_description=description,
-        output_dir=args.output,
-        checkpoint_file=args.checkpoint
-    )
+    # Validate description
+    if not description or len(description.strip()) < 10:
+        print("[ERROR] Description too short! Please provide at least 10 characters.")
+        print("Example: 'Build a REST API for blog management with authentication'\n")
+        sys.exit(1)
 
-    sys.exit(0 if success else 1)
+    if len(description) > 5000:
+        print("[WARNING] Description very long - truncating to 5000 characters")
+        description = description[:5000]
+
+    # Run pipeline with better error handling
+    try:
+        success = pipeline.run(
+            user_description=description,
+            output_dir=args.output,
+            checkpoint_file=args.checkpoint
+        )
+        sys.exit(0 if success else 1)
+    except KeyboardInterrupt:
+        print("\n\n[INTERRUPTED] Pipeline stopped by user")
+        logger.info("Pipeline interrupted by user (Ctrl+C)")
+        sys.exit(130)
+    except Exception as e:
+        print(f"\n[FATAL ERROR] {str(e)}")
+        logger.error("Unexpected error", error=str(e), exc_info=True)
+        sys.exit(1)
 
 
 if __name__ == "__main__":
