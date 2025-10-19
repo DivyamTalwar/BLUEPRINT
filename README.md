@@ -1,6 +1,17 @@
 <div align="center">
 
-# 🔮 BLUEPRINT
+<!-- Animated Logo -->
+<p align="center">
+  <img src="https://raw.githubusercontent.com/DivyamTalwar/BLUEPRINT/main/Logo.png" alt="BLUEPRINT Logo" width="500" height="600" style="margin-bottom: 20px;">
+</p>
+
+<!-- Title -->
+<h1 align="center">
+  <b>🔮 B L U E P R I N T</b>
+</h1>
+<h2 align="center">
+  <i>The Future of Code Generation</i>
+</h2>
 
 ### *The future of code generation starts here*
 
@@ -92,19 +103,43 @@ python main.py "Build a REST API for blog management with authentication"
 <div align="center">
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {
+  'primaryColor': '#00BFA6',
+  'primaryTextColor': '#FFFFFF',
+  'primaryBorderColor': '#00796B',
+  'lineColor': '#00E5FF',
+  'secondaryColor': '#FF4081',
+  'tertiaryColor': '#FFC400',
+  'background': '#0D0D0D',
+  'mainBkg': '#1DE9B6',
+  'secondBkg': '#FF4081',
+  'tertiaryBkg': '#FFC400',
+  'textColor': '#FFFFFF',
+  'fontSize': '16px',
+  'fontFamily': 'Poppins'
+}}}%%
 graph LR
-    A[😤 Your Idea] --> B[🔮 BLUEPRINT]
-    B --> C[🎉 Production-Ready Repo]
+    A["🚀 <b>Your Idea</b><br/><small><i>Natural Language</i></small>"] --> B["🧠 <b>BLUEPRINT</b><br/><small><i>AI-Powered Engine</i></small>"]
+    B --> C["🎯 <b>Production-Ready Repo</b><br/><small><i>Complete System</i></small>"]
 
-    C --> D[Architecture ✅]
-    C --> E[Code ✅]
-    C --> F[Tests ✅]
-    C --> G[Docs ✅]
-    C --> H[Setup Files ✅]
+    C --> D["🏗️ <b>Architecture</b><br/><small><i>Graph-Based Design</i></small>"]
+    C --> E["💻 <b>Code</b><br/><small><i>1,500+ Lines</i></small>"]
+    C --> F["🧪 <b>Tests</b><br/><small><i>60+ Unit Tests</i></small>"]
+    C --> G["📘 <b>Docs</b><br/><small><i>README + Setup</i></small>"]
+    C --> H["⚙️ <b>Setup Files</b><br/><small><i>Docker + Deps</i></small>"]
 
-    style A fill:#FF5722,stroke:#D32F2F,stroke-width:2px,color:#fff
-    style B fill:#4CAF50,stroke:#2E7D32,stroke-width:4px,color:#fff
-    style C fill:#2196F3,stroke:#1565C0,stroke-width:3px,color:#fff
+    %% Node Styles
+    style A fill:#FF4081,stroke:#F50057,stroke-width:4px,color:#fff,rx:20,ry:20
+    style B fill:#00BFA6,stroke:#00796B,stroke-width:5px,color:#fff,rx:20,ry:20,stroke-dasharray:6 4
+    style C fill:#2979FF,stroke:#0D47A1,stroke-width:4px,color:#fff,rx:20,ry:20
+    style D fill:#7C4DFF,stroke:#6200EA,stroke-width:2px,color:#fff,rx:12,ry:12
+    style E fill:#7C4DFF,stroke:#6200EA,stroke-width:2px,color:#fff,rx:12,ry:12
+    style F fill:#7C4DFF,stroke:#6200EA,stroke-width:2px,color:#fff,rx:12,ry:12
+    style G fill:#7C4DFF,stroke:#6200EA,stroke-width:2px,color:#fff,rx:12,ry:12
+    style H fill:#7C4DFF,stroke:#6200EA,stroke-width:2px,color:#fff,rx:12,ry:12
+
+    %% Link Styles
+    linkStyle default stroke:#FFC400,stroke-width:3px,stroke-dasharray:3 2
 ```
 
 </div>
@@ -225,23 +260,43 @@ output/generated_20251012_150422/
 **BLUEPRINT:** "Here's a complete, working system with architecture designed first."
 
 ```mermaid
+%%{init: {'theme':'base', 'themeVariables': {
+  'primaryColor':'#7950F2',
+  'primaryTextColor':'#FFFFFF',
+  'primaryBorderColor':'#5F3DC4',
+  'lineColor':'#748FFC',
+  'secondaryColor':'#20C997',
+  'tertiaryColor':'#FF6B6B',
+  'textColor':'#FFFFFF',
+  'fontSize':'15px',
+  'fontFamily':'Poppins'
+}}}%%
 graph TD
-    A[Your Idea] --> B[Feature Selection<br/>4,600+ pre-built features]
-    B --> C[RPG Construction<br/>Complete architecture]
-    C --> D[Base Class Extraction<br/>DRY principle]
-    D --> E[Dependency Mapping<br/>No circular deps]
-    E --> F[Code Generation<br/>All files at once]
+    A["💭 <b>Your Idea</b><br/><small>REST API Request</small>"] --> B["🔍 <b>Feature Selection</b><br/><small>4,600+ pre-built patterns</small>"]
+    B --> C["🏗️ <b>RPG Construction</b><br/><small>Complete architecture graph</small>"]
+    C --> D["📦 <b>Base Class Extraction</b><br/><small>DRY principle applied</small>"]
+    D --> E["🔗 <b>Dependency Mapping</b><br/><small>Zero circular imports</small>"]
+    E --> F["⚡ <b>Code Generation</b><br/><small>All 27 files at once</small>"]
 
-    F --> G[Validation Gate<br/>Quality checks]
-    G --> H{All Checks Pass?}
-    H -->|✅ Yes| I[Production Repository<br/>Ship it!]
-    H -->|❌ No| J[Stop & Save $$$<br/>Fix structure first]
+    F --> G["🛡️ <b>Validation Gate</b><br/><small>Quality assurance</small>"]
+    G --> H{"🔍 <b>All Checks</b><br/>Pass?"}
+    H -->|"Yes<br/><small>Structure Valid</small>"| I["🎉 <b>Production Repo</b><br/><small>Ready to Ship!</small>"]
+    H -->|"No<br/><small>Issues Found</small>"| J["🛑 <b>Stop & Save</b><br/><small>Fix structure first</small>"]
 
-    style A fill:#FF9800,stroke:#F57C00,stroke-width:2px,color:#fff
-    style C fill:#9C27B0,stroke:#7B1FA2,stroke-width:3px,color:#fff
-    style D fill:#E91E63,stroke:#C2185B,stroke-width:2px,color:#fff
-    style G fill:#FF5722,stroke:#D32F2F,stroke-width:3px,color:#fff
-    style I fill:#4CAF50,stroke:#388E3C,stroke-width:4px,color:#fff
+    %% Node Styles
+    style A fill:#FFA94D,stroke:#FD7E14,stroke-width:3px,color:#fff,rx:14,ry:14
+    style B fill:#339AF0,stroke:#1971C2,stroke-width:3px,color:#fff,rx:14,ry:14
+    style C fill:#9775FA,stroke:#7950F2,stroke-width:4px,color:#fff,rx:14,ry:14
+    style D fill:#FF6B9D,stroke:#E64980,stroke-width:3px,color:#fff,rx:14,ry:14
+    style E fill:#20C997,stroke:#12B886,stroke-width:3px,color:#fff,rx:14,ry:14
+    style F fill:#748FFC,stroke:#5C7CFA,stroke-width:3px,color:#fff,rx:14,ry:14
+    style G fill:#FF8787,stroke:#FA5252,stroke-width:4px,color:#fff,rx:14,ry:14
+    style H fill:#FCC419,stroke:#FAB005,stroke-width:3px,color:#000,rx:50,ry:50
+    style I fill:#51CF66,stroke:#37B24D,stroke-width:5px,color:#fff,rx:18,ry:18
+    style J fill:#FF6B6B,stroke:#F03E3E,stroke-width:4px,color:#fff,rx:14,ry:14
+
+    %% Link Styles
+    linkStyle default stroke:#ADB5BD,stroke-width:2.5px,stroke-dasharray:3 2
 ```
 
 **Result:** No circular dependencies, optimal code reuse, correct build order
@@ -291,40 +346,69 @@ def select_features(user_request):
 **BLUEPRINT:** Builds complete dependency graph FIRST → everything works together
 
 ```mermaid
+%%{init: {'theme':'base', 'themeVariables': {
+  'primaryColor':'#495057',
+  'primaryTextColor':'#fff',
+  'primaryBorderColor':'#343A40',
+  'lineColor':'#ADB5BD',
+  'secondaryColor':'#FF6B6B',
+  'tertiaryColor':'#339AF0',
+  'textColor':'#fff',
+  'fontSize':'14px',
+  'fontFamily':'Poppins'
+}}}%%
 graph TB
-    ROOT[📁 src/]
+    ROOT["📁 src/<br/><small>Root Directory</small>"]
 
-    ROOT --> API[📁 api/]
-    ROOT --> AUTH[📁 authentication/]
-    ROOT --> DB[📁 database/]
-    ROOT --> BASE[📁 base/]
+    ROOT --> API["📁 api/<br/><small>API Layer</small>"]
+    ROOT --> AUTH["📁 authentication/<br/><small>Security</small>"]
+    ROOT --> DB["📁 database/<br/><small>Data Layer</small>"]
+    ROOT --> BASE["📁 base/<br/><small>⭐ Base Classes</small>"]
 
-    API --> REST[rest_api.py<br/>95 lines]
-    API --> GRAPHQL[graphql.py<br/>88 lines]
-    API --> MIDDLEWARE[middleware.py<br/>76 lines]
+    API --> REST["🔷 rest_api.py<br/><small>95 lines</small>"]
+    API --> GRAPHQL["🔷 graphql.py<br/><small>88 lines</small>"]
+    API --> MIDDLEWARE["🔷 middleware.py<br/><small>76 lines</small>"]
 
-    AUTH --> USERAUTH[user_auth.py<br/>95 lines]
-    AUTH --> JWT[jwt_handler.py<br/>68 lines]
+    AUTH --> USERAUTH["🔷 user_auth.py<br/><small>95 lines</small>"]
+    AUTH --> JWT["🔷 jwt_handler.py<br/><small>68 lines</small>"]
 
-    DB --> ORM[orm_models.py<br/>120 lines]
-    DB --> MIGRATIONS[migrations.py<br/>45 lines]
+    DB --> ORM["🔷 orm_models.py<br/><small>120 lines</small>"]
+    DB --> MIGRATIONS["🔷 migrations.py<br/><small>45 lines</small>"]
 
-    BASE --> BASESERVICE[base_service.py<br/>120 lines<br/>📦 CRUD operations]
-    BASE --> APISERVICE[api_service.py<br/>110 lines<br/>📦 API handling]
-    BASE --> DISTSERVICE[distributed_service.py<br/>105 lines<br/>📦 Distributed systems]
+    BASE --> BASESERVICE["📦 base_service.py<br/><small>120 lines</small><br/><b>CRUD operations</b>"]
+    BASE --> APISERVICE["📦 api_service.py<br/><small>110 lines</small><br/><b>API handling</b>"]
+    BASE --> DISTSERVICE["📦 distributed_service.py<br/><small>105 lines</small><br/><b>Distributed systems</b>"]
 
-    REST -.inherits.-> APISERVICE
-    GRAPHQL -.inherits.-> APISERVICE
-    MIDDLEWARE -.uses.-> APISERVICE
-    USERAUTH -.inherits.-> BASESERVICE
-    ORM -.inherits.-> BASESERVICE
-    JWT -.uses.-> USERAUTH
+    REST -.->|inherits| APISERVICE
+    GRAPHQL -.->|inherits| APISERVICE
+    MIDDLEWARE -.->|uses| APISERVICE
+    USERAUTH -.->|inherits| BASESERVICE
+    ORM -.->|inherits| BASESERVICE
+    JWT -.->|uses| USERAUTH
 
-    style ROOT fill:#607D8B,stroke:#455A64,stroke-width:3px,color:#fff
-    style BASE fill:#FF5722,stroke:#E64A19,stroke-width:3px,color:#fff
-    style BASESERVICE fill:#F44336,stroke:#D32F2F,stroke-width:2px,color:#fff
-    style APISERVICE fill:#F44336,stroke:#D32F2F,stroke-width:2px,color:#fff
-    style DISTSERVICE fill:#F44336,stroke:#D32F2F,stroke-width:2px,color:#fff
+    %% Node Styles
+    style ROOT fill:#868E96,stroke:#495057,stroke-width:4px,color:#fff,rx:12,ry:12
+    style API fill:#4DABF7,stroke:#339AF0,stroke-width:3px,color:#fff,rx:10,ry:10
+    style AUTH fill:#A9E34B,stroke:#82C91E,stroke-width:3px,color:#fff,rx:10,ry:10
+    style DB fill:#FFD43B,stroke:#FAB005,stroke-width:3px,color:#000,rx:10,ry:10
+    style BASE fill:#FF8787,stroke:#FA5252,stroke-width:4px,color:#fff,rx:10,ry:10
+
+    style BASESERVICE fill:#FF6B6B,stroke:#F03E3E,stroke-width:3px,color:#fff,rx:8,ry:8
+    style APISERVICE fill:#FF6B6B,stroke:#F03E3E,stroke-width:3px,color:#fff,rx:8,ry:8
+    style DISTSERVICE fill:#FF6B6B,stroke:#F03E3E,stroke-width:3px,color:#fff,rx:8,ry:8
+
+    style REST fill:#74C0FC,stroke:#4DABF7,stroke-width:2px,color:#fff,rx:8,ry:8
+    style GRAPHQL fill:#74C0FC,stroke:#4DABF7,stroke-width:2px,color:#fff,rx:8,ry:8
+    style MIDDLEWARE fill:#74C0FC,stroke:#4DABF7,stroke-width:2px,color:#fff,rx:8,ry:8
+
+    style USERAUTH fill:#B2F2BB,stroke:#8CE99A,stroke-width:2px,color:#000,rx:8,ry:8
+    style JWT fill:#B2F2BB,stroke:#8CE99A,stroke-width:2px,color:#000,rx:8,ry:8
+
+    style ORM fill:#FFE066,stroke:#FCC419,stroke-width:2px,color:#000,rx:8,ry:8
+    style MIGRATIONS fill:#FFE066,stroke:#FCC419,stroke-width:2px,color:#000,rx:8,ry:8
+
+    %% Link Styles
+    linkStyle default stroke:#ADB5BD,stroke-width:2px,stroke-dasharray:5 5
 ```
 
 **What This Prevents:**
@@ -344,30 +428,54 @@ graph TB
 **BLUEPRINT:** "Here's code. Tested. Validated. Fixed. Ready. ✅"
 
 ```mermaid
+%%{init: {'theme':'base', 'themeVariables': {
+  'primaryColor':'#7950F2',
+  'primaryTextColor':'#fff',
+  'primaryBorderColor':'#5F3DC4',
+  'lineColor':'#748FFC',
+  'secondaryColor':'#20C997',
+  'tertiaryColor':'#FF8787',
+  'actorBkg':'#7950F2',
+  'actorBorder':'#5F3DC4',
+  'actorTextColor':'#fff',
+  'actorLineColor':'#ADB5BD',
+  'signalColor':'#fff',
+  'signalTextColor':'#fff',
+  'labelBoxBkgColor':'#495057',
+  'labelBoxBorderColor':'#343A40',
+  'labelTextColor':'#fff',
+  'loopTextColor':'#fff',
+  'noteBorderColor':'#FFA94D',
+  'noteBkgColor':'#FFE066',
+  'noteTextColor':'#000',
+  'activationBorderColor':'#5F3DC4',
+  'activationBkgColor':'#9775FA',
+  'sequenceNumberColor':'#fff'
+}}}%%
 sequenceDiagram
-    participant You
-    participant BLUEPRINT
-    participant Docker
-    participant Code
+    participant You as 👤 You
+    participant BP as 🧠 BLUEPRINT
+    participant Docker as 🐳 Docker
+    participant Code as 📝 Code
 
-    You->>BLUEPRINT: "Build REST API"
-    BLUEPRINT->>Code: Generate test first (TDD)
-    BLUEPRINT->>Code: Generate implementation
-    BLUEPRINT->>Docker: Run test in isolation
+    You->>+BP: Build REST API
+    Note over BP: Parse request
 
-    alt Test Passes ✅
-        Docker-->>BLUEPRINT: Success!
-        BLUEPRINT->>Code: Mark as validated
-        BLUEPRINT-->>You: Production-ready code
-    else Test Fails ❌
-        Docker-->>BLUEPRINT: Error output
-        BLUEPRINT->>BLUEPRINT: Analyze error
-        BLUEPRINT->>BLUEPRINT: Check attempt history
-        BLUEPRINT->>Code: Generate fix (different approach)
-        BLUEPRINT->>Docker: Test again
+    BP->>+Code: 🧪 Generate test first (TDD)
+    BP->>Code: 💻 Generate implementation
+    BP->>+Docker: 🚀 Run test in isolation
+
+    alt ✅ Test Passes
+        Docker-->>-BP: ✅ Success!
+        BP->>Code: ✓ Mark as validated
+        BP-->>-You: 🎉 Production-ready code
+    else ❌ Test Fails
+        Docker-->>BP: ❌ Error output
+        Note over BP: 🔍 Analyze error
+        Note over BP: 📋 Check attempt history
+        BP->>Code: 🔧 Generate fix (different approach)
+        BP->>Docker: 🔄 Test again
     end
-
-    Note over BLUEPRINT: Max 8 fix attempts<br/>History prevents infinite loops<br/>70% success rate
 ```
 
 **What Others Do:**
@@ -392,23 +500,44 @@ sequenceDiagram
 **BLUEPRINT:** Validate first, only pay for working code
 
 ```mermaid
+%%{init: {'theme':'base', 'themeVariables': {
+  'primaryColor':'#339AF0',
+  'primaryTextColor':'#fff',
+  'primaryBorderColor':'#1971C2',
+  'lineColor':'#74C0FC',
+  'secondaryColor':'#51CF66',
+  'tertiaryColor':'#FF8787',
+  'textColor':'#fff',
+  'fontSize':'15px',
+  'fontFamily':'Poppins'
+}}}%%
 graph LR
-    A[💰 Stage 1<br/>$0.20<br/>5-7 min] --> B[💰 Stage 2<br/>$0.50<br/>5-7 min]
-    B --> C{🛡️ Validation Gate<br/>$0.00<br/>10 sec}
+    A["💰 Stage 1<br/><small>Feature Selection</small><br/><b>$0.20</b><br/>⏱️ 5-7 min"] --> B["💰 Stage 2<br/><small>RPG Construction</small><br/><b>$0.50</b><br/>⏱️ 5-7 min"]
+    B --> C{"🛡️ Validation Gate<br/><small>Quality Checks</small><br/><b>$0.00</b><br/>⚡ 10 sec"}
 
-    C -->|✅ All 27 files<br/>have paths| D[💰 Stage 3<br/>$2.50<br/>8-12 min]
-    C -->|❌ Structure<br/>broken| E[🛑 STOP<br/>Save $2.50<br/>Fix first]
+    C -->|"✅ All 27 files<br/><small>have paths</small>"| D["💰 Stage 3<br/><small>Code Generation</small><br/><b>$2.50</b><br/>⏱️ 8-12 min"]
+    C -->|"❌ Structure<br/><small>broken</small>"| E["🛑 STOP<br/><small>💰 Save $2.50</small><br/><b>Fix first</b>"]
 
-    D --> F[✅ Complete Repository<br/>27 files<br/>1,500+ lines<br/>61 tests]
-    E --> G[🔧 Debug<br/>Fix structure<br/>Try again]
-    G -.->|After fixes| B
+    D --> F["✅ Complete Repo<br/><small>27 files</small><br/><small>1,500+ lines</small><br/><small>61 tests</small>"]
+    E --> G["🔧 Debug<br/><small>Fix structure</small><br/><small>Try again</small>"]
+    G -.->|"After fixes"| B
 
-    style A fill:#2196F3,stroke:#1565C0,stroke-width:2px,color:#fff
-    style B fill:#9C27B0,stroke:#7B1FA2,stroke-width:2px,color:#fff
-    style C fill:#FF9800,stroke:#F57C00,stroke-width:4px,color:#fff
-    style D fill:#4CAF50,stroke:#388E3C,stroke-width:2px,color:#fff
-    style E fill:#F44336,stroke:#D32F2F,stroke-width:3px,color:#fff
-    style F fill:#4CAF50,stroke:#388E3C,stroke-width:4px,color:#fff
+    %% Node Styles
+    style A fill:#4DABF7,stroke:#339AF0,stroke-width:3px,color:#fff,rx:12,ry:12
+    style B fill:#9775FA,stroke:#7950F2,stroke-width:3px,color:#fff,rx:12,ry:12
+    style C fill:#FFA94D,stroke:#FD7E14,stroke-width:5px,color:#fff,rx:50,ry:50
+    style D fill:#51CF66,stroke:#37B24D,stroke-width:3px,color:#fff,rx:12,ry:12
+    style E fill:#FF6B6B,stroke:#F03E3E,stroke-width:4px,color:#fff,rx:12,ry:12
+    style F fill:#51CF66,stroke:#2F9E44,stroke-width:5px,color:#fff,rx:15,ry:15
+    style G fill:#FFD43B,stroke:#FAB005,stroke-width:3px,color:#000,rx:12,ry:12
+
+    %% Link Styles
+    linkStyle 0,1 stroke:#74C0FC,stroke-width:3px
+    linkStyle 2 stroke:#51CF66,stroke-width:4px
+    linkStyle 3 stroke:#FF8787,stroke-width:4px
+    linkStyle 4 stroke:#51CF66,stroke-width:3px
+    linkStyle 5 stroke:#FFD43B,stroke-width:3px
+    linkStyle 6 stroke:#ADB5BD,stroke-width:2px,stroke-dasharray:5 5
 ```
 
 **Validation Checks:**
@@ -570,51 +699,74 @@ Replit AI:     █████████████████████�
 ### **3-Stage Pipeline: From Idea to Production**
 
 ```mermaid
+%%{init: {'theme':'base', 'themeVariables': {'primaryColor':'#4DABF7','primaryTextColor':'#fff','primaryBorderColor':'#339AF0','lineColor':'#74C0FC','secondaryColor':'#9775FA','tertiaryColor':'#51CF66','textColor':'#fff','fontSize':'14px','clusterBkg':'#1A1B1E','clusterBorder':'#495057'}}}%%
 graph TB
-    START[💭 Your Idea<br/>"Build REST API"] --> STAGE1
+    START["💭 Your Idea<br/><small>Build REST API</small>"] --> STAGE1
 
-    subgraph STAGE1 [🔵 Stage 1: Feature Selection - 5-7 min - $0.20]
-        A1[Parse Request] --> A2[Embed with Cohere]
-        A2 --> A3[30 Iterations<br/>Exploit-Explore]
-        A3 --> A4[🔍 Exploit: Vector Search<br/>4,600 features]
-        A3 --> A5[💡 Explore: LLM Generate<br/>Novel patterns]
-        A4 --> A6[27 Features Selected<br/>✅ Optimal mix]
+    subgraph STAGE1["🔵 Stage 1: Feature Selection<br/><small>⏱️ 5-7 min | 💰 $0.20</small>"]
+        A1["📝 Parse Request"] --> A2["🔤 Embed with Cohere"]
+        A2 --> A3["🔄 30 Iterations<br/><small>Exploit-Explore</small>"]
+        A3 --> A4["🔍 Exploit<br/><small>Vector Search</small><br/><small>4,600 features</small>"]
+        A3 --> A5["💡 Explore<br/><small>LLM Generate</small><br/><small>Novel patterns</small>"]
+        A4 --> A6["✅ 27 Features<br/><small>Optimal mix</small>"]
         A5 --> A6
     end
 
-    subgraph STAGE2 [🟣 Stage 2: RPG Construction - 5-7 min - $0.50]
-        B1[Functionality Graph] --> B2[Assign File Paths<br/>4 fallback strategies]
-        B2 --> B3[Extract Base Classes<br/>DRY principle]
-        B3 --> B4[Build Dependencies<br/>Prevent circular imports]
-        B4 --> B5[🛡️ Validation Gate<br/>Quality checks]
-        B5 --> B6{All Checks<br/>Pass?}
+    subgraph STAGE2["🟣 Stage 2: RPG Construction<br/><small>⏱️ 5-7 min | 💰 $0.50</small>"]
+        B1["🏗️ Functionality<br/><small>Graph</small>"] --> B2["📁 Assign Paths<br/><small>4 fallback strategies</small>"]
+        B2 --> B3["📦 Extract Base<br/><small>DRY principle</small>"]
+        B3 --> B4["🔗 Build Deps<br/><small>Prevent circular</small>"]
+        B4 --> B5["🛡️ Validation Gate<br/><small>Quality checks</small>"]
+        B5 --> B6{"🔍 All Checks<br/>Pass?"}
     end
 
-    subgraph STAGE3 [🟢 Stage 3: Code Generation - 8-12 min - $2.50]
-        C1[Topological Sort<br/>Correct build order] --> C2[Generate Tests<br/>TDD principle]
-        C2 --> C3[Generate Code<br/>Production quality]
-        C3 --> C4[Docker TDD<br/>Isolated testing]
-        C4 --> C5{Tests<br/>Pass?}
-        C5 -->|❌ No| C6[Analyze Error<br/>Check History]
-        C6 --> C7[Generate Fix<br/>Different approach]
+    subgraph STAGE3["🟢 Stage 3: Code Generation<br/><small>⏱️ 8-12 min | 💰 $2.50</small>"]
+        C1["📊 Topological Sort<br/><small>Build order</small>"] --> C2["🧪 Generate Tests<br/><small>TDD first</small>"]
+        C2 --> C3["💻 Generate Code<br/><small>Production quality</small>"]
+        C3 --> C4["🐳 Docker TDD<br/><small>Isolated test</small>"]
+        C4 --> C5{"✓ Tests<br/>Pass?"}
+        C5 -->|"❌ No"| C6["🔍 Analyze Error<br/><small>Check History</small>"]
+        C6 --> C7["🔧 Generate Fix<br/><small>New approach</small>"]
         C7 --> C4
-        C5 -->|✅ Yes| C8[Save File<br/>Mark validated]
+        C5 -->|"✅ Yes"| C8["💾 Save File<br/><small>Mark validated</small>"]
     end
 
     STAGE1 --> STAGE2
-    B6 -->|✅ Yes| STAGE3
-    B6 -->|❌ No| STOP[🛑 STOP<br/>Save $2.50<br/>Fix structure]
-    C8 --> LOOP{More<br/>Files?}
-    LOOP -->|Yes| C1
-    LOOP -->|No| FINAL[🎉 Complete Repository<br/>27 files<br/>1,500+ lines<br/>61 tests<br/>Ready to deploy]
+    B6 -->|"✅ Yes"| STAGE3
+    B6 -->|"❌ No"| STOP["🛑 STOP<br/><small>💰 Save $2.50</small><br/><small>Fix structure</small>"]
+    C8 --> LOOP{"🔄 More<br/>Files?"}
+    LOOP -->|"Yes"| C1
+    LOOP -->|"No"| FINAL["🎉 Complete Repo<br/><small>27 files</small><br/><small>1,500+ lines</small><br/><small>61 tests</small><br/><b>Ready to deploy!</b>"]
 
-    style START fill:#FF9800,stroke:#F57C00,stroke-width:2px,color:#fff
-    style STAGE1 fill:#2196F3,stroke:#1565C0,stroke-width:3px,color:#fff
-    style STAGE2 fill:#9C27B0,stroke:#7B1FA2,stroke-width:3px,color:#fff
-    style STAGE3 fill:#4CAF50,stroke:#388E3C,stroke-width:3px,color:#fff
-    style B5 fill:#FF9800,stroke:#F57C00,stroke-width:3px,color:#fff
-    style STOP fill:#F44336,stroke:#D32F2F,stroke-width:2px,color:#fff
-    style FINAL fill:#4CAF50,stroke:#388E3C,stroke-width:4px,color:#fff
+    style START fill:#FFA94D,stroke:#FD7E14,stroke-width:4px,color:#fff,rx:15,ry:15
+    style STAGE1 fill:#4DABF7,stroke:#339AF0,stroke-width:4px,color:#fff,rx:10,ry:10
+    style STAGE2 fill:#9775FA,stroke:#7950F2,stroke-width:4px,color:#fff,rx:10,ry:10
+    style STAGE3 fill:#51CF66,stroke:#37B24D,stroke-width:4px,color:#fff,rx:10,ry:10
+    style A1 fill:#74C0FC,stroke:#4DABF7,stroke-width:2px,color:#fff,rx:8,ry:8
+    style A2 fill:#74C0FC,stroke:#4DABF7,stroke-width:2px,color:#fff,rx:8,ry:8
+    style A3 fill:#74C0FC,stroke:#4DABF7,stroke-width:2px,color:#fff,rx:8,ry:8
+    style A4 fill:#339AF0,stroke:#1971C2,stroke-width:3px,color:#fff,rx:8,ry:8
+    style A5 fill:#339AF0,stroke:#1971C2,stroke-width:3px,color:#fff,rx:8,ry:8
+    style A6 fill:#228BE6,stroke:#1864AB,stroke-width:3px,color:#fff,rx:8,ry:8
+    style B1 fill:#B197FC,stroke:#9775FA,stroke-width:2px,color:#fff,rx:8,ry:8
+    style B2 fill:#B197FC,stroke:#9775FA,stroke-width:2px,color:#fff,rx:8,ry:8
+    style B3 fill:#B197FC,stroke:#9775FA,stroke-width:2px,color:#fff,rx:8,ry:8
+    style B4 fill:#B197FC,stroke:#9775FA,stroke-width:2px,color:#fff,rx:8,ry:8
+    style B5 fill:#FFA94D,stroke:#FD7E14,stroke-width:4px,color:#fff,rx:8,ry:8
+    style B6 fill:#FFD43B,stroke:#FAB005,stroke-width:3px,color:#000,rx:50,ry:50
+    style C1 fill:#8CE99A,stroke:#51CF66,stroke-width:2px,color:#000,rx:8,ry:8
+    style C2 fill:#8CE99A,stroke:#51CF66,stroke-width:2px,color:#000,rx:8,ry:8
+    style C3 fill:#8CE99A,stroke:#51CF66,stroke-width:2px,color:#000,rx:8,ry:8
+    style C4 fill:#51CF66,stroke:#37B24D,stroke-width:3px,color:#fff,rx:8,ry:8
+    style C5 fill:#FFD43B,stroke:#FAB005,stroke-width:3px,color:#000,rx:50,ry:50
+    style C6 fill:#FFA94D,stroke:#FD7E14,stroke-width:2px,color:#fff,rx:8,ry:8
+    style C7 fill:#FFA94D,stroke:#FD7E14,stroke-width:2px,color:#fff,rx:8,ry:8
+    style C8 fill:#40C057,stroke:#2F9E44,stroke-width:3px,color:#fff,rx:8,ry:8
+    style STOP fill:#FF6B6B,stroke:#F03E3E,stroke-width:4px,color:#fff,rx:12,ry:12
+    style LOOP fill:#FFD43B,stroke:#FAB005,stroke-width:3px,color:#000,rx:50,ry:50
+    style FINAL fill:#51CF66,stroke:#2F9E44,stroke-width:6px,color:#fff,rx:15,ry:15
+
+    linkStyle default stroke:#74C0FC,stroke-width:2.5px
 ```
 
 ### **What Makes This Architecture Legendary**
@@ -1332,18 +1484,6 @@ See [LICENSE](LICENSE) for full details.
 - The open-source community
 - Early adopters and beta testers
 - Everyone who believed in this vision
-
----
-
-## ⭐ Star History
-
-<div align="center">
-
-[![Star History Chart](https://api.star-history.com/svg?repos=yourusername/BLUEPRINT&type=Date)](https://star-history.com/#yourusername/BLUEPRINT&Date)
-
-**Help us reach 1,000 stars! ⭐**
-
-</div>
 
 ---
 
