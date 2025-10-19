@@ -82,6 +82,22 @@ class FinalLLMRouter:
         Returns:
             LLM response
         """
+        if not prompt or not prompt.strip():
+            raise ValueError("Prompt cannot be empty")
+
+        if len(prompt) > 100000:
+            raise ValueError(f"Prompt too long ({len(prompt)} chars). Max: 100,000 characters")
+
+        if not 0 <= temperature <= 2:
+            raise ValueError(f"Temperature must be between 0 and 2, got {temperature}")
+
+        if max_tokens < 1 or max_tokens > 8000:
+            raise ValueError(f"max_tokens must be between 1 and 8000, got {max_tokens}")
+
+        if complexity not in ("auto", "simple", "complex"):
+            logger.warning("Invalid complexity '%s', defaulting to 'auto'", complexity)
+            complexity = "auto"
+
         # Determine which model to use based on complexity
         if complexity == "auto":
             complexity = self._detect_complexity(prompt, max_tokens)
@@ -211,9 +227,27 @@ class FinalLLMRouter:
                 metadata={"finish_reason": response.choices[0].finish_reason},
             )
 
+        except KeyError as e:
+            logger.error("Invalid response structure from API", error=str(e))
+            raise ValueError(f"API returned invalid response structure: {str(e)}")
+        except AttributeError as e:
+            logger.error("Missing expected fields in API response", error=str(e))
+            raise ValueError(f"API response missing required fields: {str(e)}")
         except Exception as e:
-            logger.error("Claude (OpenRouter) error: %s", str(e))
-            raise
+            error_msg = str(e)
+            logger.error("Claude (OpenRouter) API call failed", error=error_msg, model=model)
+
+            # Provide helpful error messages for common issues
+            if "rate_limit" in error_msg.lower():
+                raise RuntimeError("Rate limit exceeded. Please wait a moment and try again.")
+            elif "invalid_api_key" in error_msg.lower() or "unauthorized" in error_msg.lower():
+                raise ValueError("Invalid API key. Check your OPENROUTER_API_KEY in .env file.")
+            elif "timeout" in error_msg.lower():
+                raise TimeoutError(f"API request timed out after {latency:.1f}s. Try again or check your connection.")
+            elif "max_tokens" in error_msg.lower():
+                raise ValueError(f"Token limit exceeded. Reduce max_tokens (current: {max_tokens})")
+            else:
+                raise RuntimeError(f"API call failed: {error_msg}")
 
     def get_stats(self) -> Dict[str, Any]:
         """Get usage statistics"""

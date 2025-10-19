@@ -11,37 +11,35 @@ logger = get_logger(__name__)
 
 
 class CohereEmbeddings:
-    """Generate embeddings using Cohere"""
 
     def __init__(self, api_key: str, model: str = "embed-english-v3.0"):
-        """
-        Initialize Cohere embeddings
+        if not api_key or not api_key.strip():
+            raise ValueError("Cohere API key cannot be empty. Set COHERE_API_KEY in .env file.")
 
-        Args:
-            api_key: Cohere API key
-            model: Embedding model
-                - embed-english-v3.0 (1024 dim, best for English)
-                - embed-multilingual-v3.0 (1024 dim, multilingual)
-        """
-        self.client = cohere.Client(api_key)
-        self.model = model
-        self.dimension = 1024  # Cohere v3 models
-        self.total_tokens = 0
-        self.total_cost = 0.0
+        if api_key.startswith("ADD-YOUR-"):
+            raise ValueError("Please replace placeholder with actual Cohere API key in .env file.")
 
-        logger.info("Cohere embeddings initialized: %s", model)
+        try:
+            self.client = cohere.Client(api_key)
+            self.model = model
+            self.dimension = 1024  # Cohere v3 models
+            self.total_tokens = 0
+            self.total_cost = 0.0
+
+            logger.info("Cohere embeddings initialized: %s", model)
+        except Exception as e:
+            logger.error("Failed to initialize Cohere client", error=str(e))
+            raise RuntimeError(f"Cohere initialization failed: {str(e)}. Check your API key.")
 
     def generate_embedding(self, text: str, input_type: str = "search_document") -> List[float]:
-        """
-        Generate embedding for single text
+        if not text or not text.strip():
+            logger.warning("Empty text provided for embedding, returning empty vector")
+            return [0.0] * self.dimension
 
-        Args:
-            text: Text to embed
-            input_type: "search_document" or "search_query"
+        if len(text) > 50000:
+            logger.warning("Text too long (%d chars), truncating to 50000", len(text))
+            text = text[:50000]
 
-        Returns:
-            Embedding vector
-        """
         try:
             response = self.client.embed(
                 texts=[text],
@@ -60,8 +58,16 @@ class CohereEmbeddings:
             return embedding
 
         except Exception as e:
-            logger.error("Cohere embedding error: %s", str(e))
-            return []
+            error_msg = str(e)
+            logger.error("Cohere embedding failed", error=error_msg, text_len=len(text))
+
+            if "rate" in error_msg.lower() or "limit" in error_msg.lower():
+                raise RuntimeError("Cohere rate limit exceeded. Wait a moment and retry.")
+            elif "invalid" in error_msg.lower() or "unauthorized" in error_msg.lower():
+                raise ValueError("Invalid Cohere API key. Check COHERE_API_KEY in .env")
+            else:
+                logger.error("Returning empty embedding due to error")
+                return [0.0] * self.dimension
 
     def generate_embeddings_batch(
         self,

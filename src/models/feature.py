@@ -44,14 +44,23 @@ class Feature:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "Feature":
-        """Create from dictionary"""
+        required_fields = ["id", "domain", "subdomain", "name", "description", "complexity"]
+        for field in required_fields:
+            if field not in data or not data[field]:
+                raise ValueError(f"Missing required field: {field}")
+
+        try:
+            complexity = ComplexityLevel(data["complexity"])
+        except ValueError:
+            raise ValueError(f"Invalid complexity level: {data['complexity']}. Must be one of: {[c.value for c in ComplexityLevel]}")
+
         return cls(
             id=data["id"],
             domain=data["domain"],
             subdomain=data["subdomain"],
             name=data["name"],
             description=data["description"],
-            complexity=ComplexityLevel(data["complexity"]),
+            complexity=complexity,
             keywords=data.get("keywords", []),
             use_cases=data.get("use_cases", []),
             dependencies=data.get("dependencies", []),
