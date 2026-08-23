@@ -1,4 +1,5 @@
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Dict, Any, Optional
 from pathlib import Path
 
@@ -22,6 +23,10 @@ class Stage3Orchestrator:
         self.docker = DockerRunner(config.get("docker", {}))
         self.cost_tracker = CostTracker()
         self.logger = logger
+        self.parallel_requests = max(
+            1,
+            int(config.get("performance", {}).get("parallel_requests", 1)),
+        )
 
         # Initialize Stage 3 components with stage3 config
         stage3_config = config.get("stage3", {})
@@ -83,67 +88,100 @@ class Stage3Orchestrator:
         generated_code = {}
         checkpoint_count = 0
 
-        for i, node_id in enumerate(execution_order):
-            node_data = rpg.graph.nodes[node_id]
-            node_name = node_data.get("name", node_id)
+        order_index = {node_id: index for index, node_id in enumerate(execution_order)}
+        execution_set = set(execution_order)
+        waves = [
+            sorted(
+                (node_id for node_id in level if node_id in execution_set),
+                key=order_index.__getitem__,
+            )
+            for level in traversal.group_by_level()
+        ]
 
-            # Progress
-            progress = traversal.get_progress()
-            self.logger.info(f"[{i+1}/{len(execution_order)}] Generating: {node_name} "
-                          f"(Progress: {progress['progress_percent']:.1f}%)")
+        for wave in (wave for wave in waves if wave):
+            for node_id in wave:
+                node_data = rpg.graph.nodes[node_id]
+                progress = traversal.get_progress()
+                position = order_index[node_id] + 1
+                self.logger.info(
+                    f"[{position}/{len(execution_order)}] Generating: "
+                    f"{node_data.get('name', node_id)} "
+                    f"(Progress: {progress['progress_percent']:.1f}%)"
+                )
+                traversal.mark_in_progress(node_id)
 
-            # Mark in progress
-            traversal.mark_in_progress(node_id)
+            # Only dependency-independent nodes share a worker pool. Results are
+            # committed below in topological order so graph state and artifacts
+            # stay deterministic even when requests finish out of order.
+            results = {}
+            worker_count = min(self.parallel_requests, len(wave))
+            with ThreadPoolExecutor(max_workers=worker_count) as executor:
+                futures = {
+                    executor.submit(self.tdd_engine.generate, rpg, node_id): node_id
+                    for node_id in wave
+                }
+                for future in as_completed(futures):
+                    node_id = futures[future]
+                    try:
+                        results[node_id] = future.result()
+                    except Exception as exc:
+                        results[node_id] = (False, {"error": str(exc)})
 
-            # Generate with TDD
-            try:
-                has_code, result = self.tdd_engine.generate(rpg, node_id)
-
-                # CRITICAL FIX: Save code if it was generated, regardless of validation status
-                if has_code and result.get("implementation"):
-                    generated_code[node_id] = result
-
-                    # Update node status in RPG
-                    status = result.get("status", "generated")
-                    validation_method = result.get("validation_method", "none")
-                    errors = result.get("errors", [])
-
-                    rpg.update_node(
-                        node_id,
-                        implementation=result.get("implementation"),
-                        test_code=result.get("test_code"),
-                        validation_method=validation_method,
-                        validation_errors=errors,
-                        generation_attempts=result.get("attempts", 0),
-                        status=status
-                    )
-
-                    # Mark in traversal based on status
-                    if status == "validated":
-                        traversal.mark_completed(node_id)
-                        self.logger.info(f"[✓] Validated successfully in {result.get('attempts', 1)} attempt(s)")
-                    elif status in ["generated", "syntax_valid"]:
-                        traversal.mark_completed(node_id)  # Still mark as completed since we have code
-                        self.logger.info(f"[⚠] Code generated but not validated ({validation_method})")
-                    else:
-                        traversal.mark_failed(node_id, result.get("error", "Unknown error"))
-                        self.logger.warning(f"[✗] Generation failed")
-                else:
-                    # No code was generated at all
-                    traversal.mark_failed(node_id, result.get("error", "Unknown error"))
-                    self.logger.error(f"[✗] Failed to generate code")
-
-            except Exception as e:
-                traversal.mark_failed(node_id, str(e))
-                self.logger.error(f"[✗] Exception during generation", error=str(e))
-
-            # Checkpoint
-            checkpoint_count += 1
-            if checkpoint_count >= checkpoint_interval:
-                traversal.save_checkpoint("output/stage3_checkpoint.json")
-                checkpoint_count = 0
+            for node_id in wave:
+                has_code, result = results[node_id]
+                self._apply_generation_result(
+                    rpg, traversal, generated_code, node_id, has_code, result
+                )
+                checkpoint_count += 1
+                if checkpoint_count >= checkpoint_interval:
+                    traversal.save_checkpoint("output/stage3_checkpoint.json")
+                    checkpoint_count = 0
 
         return generated_code
+
+    def _apply_generation_result(
+        self,
+        rpg: RepositoryPlanningGraph,
+        traversal: TopologicalTraversal,
+        generated_code: Dict[str, Dict],
+        node_id: str,
+        has_code: bool,
+        result: Dict[str, Any],
+    ) -> None:
+        """Commit one worker result to shared state on the coordinator thread."""
+        if not has_code or not result.get("implementation"):
+            error = result.get("error", "Unknown error")
+            traversal.mark_failed(node_id, error)
+            self.logger.error("[✗] Failed to generate code", error=error)
+            return
+
+        generated_code[node_id] = result
+        status = result.get("status", "generated")
+        validation_method = result.get("validation_method", "none")
+        errors = result.get("errors", [])
+        rpg.update_node(
+            node_id,
+            implementation=result.get("implementation"),
+            test_code=result.get("test_code"),
+            validation_method=validation_method,
+            validation_errors=errors,
+            generation_attempts=result.get("attempts", 0),
+            status=status,
+        )
+
+        if status == "validated":
+            traversal.mark_completed(node_id)
+            self.logger.info(
+                f"[✓] Validated successfully in {result.get('attempts', 1)} attempt(s)"
+            )
+        elif status in ["generated", "syntax_valid"]:
+            traversal.mark_completed(node_id)
+            self.logger.info(
+                f"[⚠] Code generated but not validated ({validation_method})"
+            )
+        else:
+            traversal.mark_failed(node_id, result.get("error", "Unknown error"))
+            self.logger.warning("[✗] Generation failed")
 
     def _run_integration_tests(self, repo_path: str) -> bool:
         try:

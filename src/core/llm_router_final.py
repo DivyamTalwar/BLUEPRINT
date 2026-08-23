@@ -1,4 +1,5 @@
 import os
+import threading
 import time
 from typing import Optional, Dict, Any
 from dataclasses import dataclass
@@ -38,7 +39,9 @@ class FinalLLMRouter:
         """Initialize with OpenRouter API key"""
         self.config = config
         self.total_cost = 0.0
+        self.total_tokens = 0
         self.api_calls = 0
+        self._stats_lock = threading.Lock()
 
         # Check required keys
         openrouter_key = os.getenv("OPENROUTER_API_KEY")
@@ -200,8 +203,10 @@ class FinalLLMRouter:
             # Claude 3.7 Sonnet: Input $3/1M, Output $15/1M (avg ~$9/1M) - same pricing
             cost = (tokens / 1_000_000) * 9.0
 
-            self.total_cost += cost
-            self.api_calls += 1
+            with self._stats_lock:
+                self.total_cost += cost
+                self.total_tokens += tokens
+                self.api_calls += 1
 
             model_name = "3.7" if "3.7" in model else "3.5"
             logger.debug("Claude %s: tokens=%d, cost=$%.4f, latency=%.2fs",
@@ -251,13 +256,18 @@ class FinalLLMRouter:
 
     def get_stats(self) -> Dict[str, Any]:
         """Get usage statistics"""
+        with self._stats_lock:
+            total_cost = self.total_cost
+            total_tokens = self.total_tokens
+            api_calls = self.api_calls
+
         return {
-            "total_cost": round(self.total_cost, 4),
-            "api_calls": self.api_calls,
-            "cost_per_call": round(self.total_cost / self.api_calls, 4) if self.api_calls > 0 else 0,
+            "total_cost": round(total_cost, 4),
+            "api_calls": api_calls,
+            "cost_per_call": round(total_cost / api_calls, 4) if api_calls > 0 else 0,
             "providers": {
                 "claude_3.5_sonnet": True,
                 "claude_3.7_sonnet": True,
             },
-            "total_tokens": 0,  # For compatibility
+            "total_tokens": total_tokens,
         }
