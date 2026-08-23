@@ -17,7 +17,7 @@ class TDDEngine:
 
         self.max_fix_attempts = config.get("max_debug_attempts", 8)
         self.skip_docker = config.get("skip_docker", False)
-        self.save_unvalidated = config.get("save_unvalidated", True)
+        self.save_unvalidated = config.get("save_unvalidated", False)
         self.static_validation = config.get("static_validation", True)
 
         # Check Docker availability once
@@ -104,8 +104,12 @@ class TDDEngine:
             result["status"] = "validated" if tdd_success else "generated"
             result["validation_method"] = "docker"
 
-        # Always return True if code was generated (even if not validated)
-        has_code = bool(result["implementation"])
+        # Fail closed by default. Generated/static-valid code remains available
+        # in the result for diagnostics, but only Docker-validated code is
+        # eligible for the repository release path unless explicitly opted in.
+        has_code = bool(result["implementation"]) and (
+            result["status"] == "validated" or self.save_unvalidated
+        )
         return has_code, result
 
     def _generate_test(self, node_data: Dict[str, Any], rpg: RepositoryPlanningGraph) -> Optional[str]:
@@ -218,6 +222,14 @@ IMPORTANT:
 - Total class should be 100+ lines
 """
 
+        # Keep escaped newlines outside f-string expressions for Python 3.11
+        # compatibility (PEP 701 only relaxed this restriction in Python 3.12).
+        base_class_context = (
+            "Base class to inherit from:\n" + base_class_code
+            if base_class_code
+            else ""
+        )
+
         prompt = f"""Implement this {"BASE CLASS" if is_base_class else "function/method"} to pass the test.
 
 Signature:
@@ -232,7 +244,7 @@ Functionality:
 Test code:
 {test_code[:1000]}...
 
-{"Base class to inherit from:\n" + base_class_code if base_class_code else ""}
+{base_class_context}
 
 {base_class_methods_requirement}
 
@@ -290,7 +302,10 @@ Generate the COMPLETE implementation now:"""
                 )
 
                 impl_code = self._extract_code_block(retry_response.content)
-                self.logger.info(f"Retry generated {len(impl_code.split('\\n'))} lines for {name}")
+                retry_line_count = len(impl_code.split("\n"))
+                self.logger.info(
+                    f"Retry generated {retry_line_count} lines for {name}"
+                )
 
             self.logger.debug(f"Implementation generated for {name}", lines=len(impl_code.split('\n')))
             return impl_code
