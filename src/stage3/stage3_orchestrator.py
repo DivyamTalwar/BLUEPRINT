@@ -8,6 +8,7 @@ from src.core.llm_router_final import FinalLLMRouter
 from src.stage3.topological_traversal import TopologicalTraversal
 from src.stage3.tdd_engine import TDDEngine
 from src.stage3.repository_builder import RepositoryBuilder
+from src.stage3.release_gate import ReleaseGate
 from src.utils.docker_runner import DockerRunner
 from src.utils.logger import StructuredLogger
 from src.utils.cost_tracker import CostTracker
@@ -68,13 +69,34 @@ class Stage3Orchestrator:
         self.logger.info("Running integration tests...")
         integration_success = self._run_integration_tests(repo_path)
 
+        # Step 5: Produce a machine-verifiable, fail-closed release receipt.
+        gate = ReleaseGate(repo_path)
+        receipt = gate.evaluate(
+            rpg,
+            generated_code,
+            integration_success=integration_success,
+            router_stats=self.llm.get_stats(),
+            config=self.config,
+        )
+        self.last_validation_receipt = str(gate.write(receipt))
+        if not receipt["release_eligible"]:
+            self.logger.warning(
+                "Generated repository is a draft, not a release artifact",
+                reasons=receipt["reasons"],
+                receipt=self.last_validation_receipt,
+            )
+
         # Summary
         elapsed = time.time() - start_time
         self._print_summary(traversal, generated_code, integration_success, elapsed, repo_path)
 
         # Return success based on generation and tests
         progress = traversal.get_progress()
-        success = progress["failed"] == 0 and integration_success
+        success = (
+            progress["failed"] == 0
+            and integration_success
+            and receipt["release_eligible"]
+        )
 
         return success
 

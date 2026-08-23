@@ -25,5 +25,5 @@ jobs:
           cache: pip
       - run: python -m pip install --upgrade pip
       - run: python -m pip install -e ".[dev]"
-      - run: python -m pytest -q tests/test_rpg_core.py tests/test_release_defaults.py tests/test_wavefront_generation.py
+      - run: python -m pytest -q tests/test_rpg_core.py tests/test_release_defaults.py tests/test_wavefront_generation.py tests/test_release_gate.py
       - run: python -m compileall -q src
