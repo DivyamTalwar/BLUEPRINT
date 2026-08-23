@@ -222,6 +222,14 @@ IMPORTANT:
 - Total class should be 100+ lines
 """
 
+        # Keep escaped newlines outside f-string expressions for Python 3.11
+        # compatibility (PEP 701 only relaxed this restriction in Python 3.12).
+        base_class_context = (
+            "Base class to inherit from:\n" + base_class_code
+            if base_class_code
+            else ""
+        )
+
         prompt = f"""Implement this {"BASE CLASS" if is_base_class else "function/method"} to pass the test.
 
 Signature:
@@ -236,7 +244,7 @@ Functionality:
 Test code:
 {test_code[:1000]}...
 
-{"Base class to inherit from:\n" + base_class_code if base_class_code else ""}
+{base_class_context}
 
 {base_class_methods_requirement}
 
