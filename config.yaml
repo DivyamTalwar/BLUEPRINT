@@ -41,8 +41,8 @@ stage3:
   max_debug_attempts: 8
   test_timeout: 60
   skip_docker: false  # Set to true to skip Docker test execution
-  save_unvalidated: true  # Save code even if tests can't run
-  static_validation: true  # Use static analysis when Docker unavailable
+  save_unvalidated: false  # Fail closed: unvalidated code is never a release artifact
+  static_validation: true  # Syntax feedback only; never equivalent to executed tests
   incremental_save: true  # Save code files immediately after generation
   enable_resume: true  # Allow resuming from checkpoints
 vector_db:

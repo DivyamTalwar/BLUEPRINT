@@ -100,10 +100,10 @@ def test_config_structure():
             )
 
         # Validate values
-        assert stage3_config["save_unvalidated"] == True, "save_unvalidated must be True"
-        assert stage3_config["static_validation"] == True, "static_validation must be True"
+        assert stage3_config["save_unvalidated"] is False, "release must fail closed"
+        assert stage3_config["static_validation"] is True, "static feedback should remain enabled"
 
-        results.add_result("Config: Critical values", True, "save_unvalidated=True, static_validation=True")
+        results.add_result("Config: Critical values", True, "save_unvalidated=False, static_validation=True")
 
     except Exception as e:
         results.add_result("Config: Stage3 settings", False, str(e))

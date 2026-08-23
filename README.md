@@ -16,15 +16,13 @@
 ### *The future of code generation starts here*
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Status-Production%20Ready-success?style=for-the-badge&logo=checkmarx&logoColor=white" alt="Status">
-  <img src="https://img.shields.io/badge/Python-3.9+-blue?style=for-the-badge&logo=python&logoColor=white" alt="Python">
+  <img src="https://img.shields.io/badge/Status-Research%20Prototype-orange?style=for-the-badge" alt="Research prototype">
+  <img src="https://img.shields.io/badge/Python-3.11+-blue?style=for-the-badge&logo=python&logoColor=white" alt="Python">
   <img src="https://img.shields.io/badge/AI-Claude%203.7%20Sonnet-blueviolet?style=for-the-badge&logo=anthropic&logoColor=white" alt="AI">
-  <img src="https://img.shields.io/badge/Tests-Passing-brightgreen?style=for-the-badge&logo=pytest&logoColor=white" alt="Tests">
-  <img src="https://img.shields.io/badge/Generation_Time-15--20_min-orange?style=for-the-badge&logo=clockify&logoColor=white" alt="Time">
-  <img src="https://img.shields.io/badge/Cost-$2--4_per_repo-green?style=for-the-badge&logo=cash-app&logoColor=white" alt="Cost">
+  <img src="https://img.shields.io/badge/Release_Gate-Fail_Closed-brightgreen?style=for-the-badge&logo=pytest&logoColor=white" alt="Fail-closed release gate">
 </p>
 
-<h3 align="center">🚀 Generate complete, production-ready repositories from natural language in 20 minutes 🚀</h3>
+<h3 align="center">Explore graph-planned repository generation from natural language</h3>
 
 <p align="center">
   <a href="#-the-problem">The Problem</a> •
@@ -36,6 +34,14 @@
 </p>
 
 ---
+
+> [!IMPORTANT]
+> **Maturity and evidence:** BLUEPRINT is a research prototype. Generated code
+> is a draft unless Docker execution and integration tests validate it. Static
+> syntax checks are diagnostic only. Time, cost, file-count, and pass-rate
+> figures elsewhere in this document describe an earlier example run; they are
+> not current guarantees or reproducible benchmarks. See
+> [Validation status](docs/VALIDATION_STATUS.md).
 
 ### 💥 **Stop writing boilerplate. Start shipping products.**
 
@@ -75,7 +81,7 @@ You're not alone. Developers spend **40-60% of their time** on:
 
 <div align="center">
 
-### **BLUEPRINT generates COMPLETE repositories in 20 minutes**
+### **BLUEPRINT explores complete repository generation**
 
 </div>
 
@@ -83,13 +89,13 @@ You're not alone. Developers spend **40-60% of their time** on:
 # What you want
 python main.py "Build a REST API for blog management with authentication"
 
-# What you get (20 minutes later)
-✅ 27 Python files (1,500+ lines of production code)
+# What an earlier example produced (results vary)
+✅ 27 Python files (1,500+ lines of draft code)
 ✅ Complete architecture (base classes + features)
 ✅ 61 tests (>50% passing)
 ✅ Documentation (README, setup.py, requirements.txt)
 ✅ Best practices (design patterns, error handling)
-✅ TDD-validated (Docker tested)
+⚠️ Release requires Docker tests and integration validation
 
 # What you save
 ⏰ 2-3 hours of setup time

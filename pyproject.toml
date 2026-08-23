@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "blueprint-repo-generator"
+version = "0.1.0"
+description = "Research prototype for graph-planned repository generation"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+authors = [{name = "Divyam Talwar"}]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+  "cohere>=5,<6",
+  "docker>=7,<8",
+  "networkx>=3.2,<4",
+  "openai>=1,<2",
+  "pinecone>=5,<6",
+  "pydantic>=2.5,<3",
+  "python-dotenv>=1,<2",
+  "python-json-logger>=2,<4",
+  "PyYAML>=6,<7",
+  "requests>=2.31,<3",
+  "structlog>=24,<26",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.4", "pytest-asyncio>=0.23", "pytest-timeout>=2.2"]
+viz = ["matplotlib>=3.8", "pygraphviz>=1.11"]
+
+[tool.setuptools.packages.find]
+include = ["src*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

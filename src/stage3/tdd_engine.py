@@ -17,7 +17,7 @@ class TDDEngine:
 
         self.max_fix_attempts = config.get("max_debug_attempts", 8)
         self.skip_docker = config.get("skip_docker", False)
-        self.save_unvalidated = config.get("save_unvalidated", True)
+        self.save_unvalidated = config.get("save_unvalidated", False)
         self.static_validation = config.get("static_validation", True)
 
         # Check Docker availability once
@@ -104,8 +104,12 @@ class TDDEngine:
             result["status"] = "validated" if tdd_success else "generated"
             result["validation_method"] = "docker"
 
-        # Always return True if code was generated (even if not validated)
-        has_code = bool(result["implementation"])
+        # Fail closed by default. Generated/static-valid code remains available
+        # in the result for diagnostics, but only Docker-validated code is
+        # eligible for the repository release path unless explicitly opted in.
+        has_code = bool(result["implementation"]) and (
+            result["status"] == "validated" or self.save_unvalidated
+        )
         return has_code, result
 
     def _generate_test(self, node_data: Dict[str, Any], rpg: RepositoryPlanningGraph) -> Optional[str]:
