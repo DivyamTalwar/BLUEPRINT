@@ -302,7 +302,10 @@ Generate the COMPLETE implementation now:"""
                 )
 
                 impl_code = self._extract_code_block(retry_response.content)
-                self.logger.info(f"Retry generated {len(impl_code.split('\\n'))} lines for {name}")
+                retry_line_count = len(impl_code.split("\n"))
+                self.logger.info(
+                    f"Retry generated {retry_line_count} lines for {name}"
+                )
 
             self.logger.debug(f"Implementation generated for {name}", lines=len(impl_code.split('\n')))
             return impl_code
